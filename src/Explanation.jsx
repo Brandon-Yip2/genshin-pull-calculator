@@ -40,20 +40,20 @@ function PerPullRateChart() {
   }, []);
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
         <XAxis
           dataKey="pity"
-          stroke="#aaa"
-          label={{ value: 'Pity counter', position: 'insideBottom', offset: -5, fill: '#aaa' }}
+          stroke="var(--chart-axis)"
+          label={{ value: 'Pity counter', position: 'insideBottom', offset: -5, fill: 'var(--chart-axis)' }}
         />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v) => pctFmt(v)}
           labelFormatter={(p) => `Pity ${p}`}
         />
@@ -61,12 +61,12 @@ function PerPullRateChart() {
           type="monotone"
           dataKey="rate"
           name="P(5★ this pull)"
-          stroke="#7bc36b"
+          stroke="var(--chart-line-1)"
           dot={false}
           strokeWidth={2}
         />
-        <ReferenceLine x={76} stroke="#ec8c4b" strokeDasharray="4 4" label={{ value: 'soft pity', fill: '#ec8c4b', position: 'top' }} />
-        <ReferenceLine x={90} stroke="#e25c5c" strokeDasharray="4 4" label={{ value: 'hard pity', fill: '#e25c5c', position: 'top' }} />
+        <ReferenceLine x={76} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
+        <ReferenceLine x={90} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'hard pity', fill: 'var(--danger)', position: 'top', offset: 12 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -83,16 +83,16 @@ function FirstFiveStarChart({ curves, maxWishes }) {
   }, [curves, maxWishes]);
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="wish" stroke="#aaa" />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(1) + '%'}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v) => pctFmt(v)}
           labelFormatter={(n) => `Wish ${n}`}
         />
@@ -100,7 +100,7 @@ function FirstFiveStarChart({ curves, maxWishes }) {
           type="monotone"
           dataKey="p"
           name="P(first 5★ at exactly this wish)"
-          stroke="#4f9cff"
+          stroke="var(--chart-line-2)"
           dot={false}
           strokeWidth={2}
         />
@@ -123,17 +123,17 @@ function FirstFiveStarCumulativeChart({ curves }) {
   }, [curves]);
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="wish" stroke="#aaa" />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
           domain={[0, 1]}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v, _name, item) => formatProb(v, item.payload.hard)}
           labelFormatter={(n) => `By wish ${n}`}
         />
@@ -141,12 +141,12 @@ function FirstFiveStarCumulativeChart({ curves }) {
           type="monotone"
           dataKey="cum"
           name="P(any 5★ by this wish)"
-          stroke="#7bc36b"
+          stroke="var(--chart-line-1)"
           dot={false}
           strokeWidth={2}
         />
-        <ReferenceLine x={76} stroke="#ec8c4b" strokeDasharray="4 4" label={{ value: 'soft pity', fill: '#ec8c4b', position: 'top' }} />
-        <ReferenceLine x={90} stroke="#e25c5c" strokeDasharray="4 4" label={{ value: 'hard pity', fill: '#e25c5c', position: 'top' }} />
+        <ReferenceLine x={76} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
+        <ReferenceLine x={90} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'hard pity', fill: 'var(--danger)', position: 'top', offset: 12 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -163,16 +163,16 @@ function PromoDistChart({ curves, maxWishes }) {
   }, [curves, maxWishes]);
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="wish" stroke="#aaa" />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(1) + '%'}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v) => pctFmt(v)}
           labelFormatter={(n) => `Wish ${n}`}
         />
@@ -180,7 +180,7 @@ function PromoDistChart({ curves, maxWishes }) {
           type="monotone"
           dataKey="p"
           name="P(first promo at exactly this wish)"
-          stroke="#f0c419"
+          stroke="var(--accent)"
           dot={false}
           strokeWidth={2}
         />
@@ -203,17 +203,17 @@ function PromoCumulativeChart({ curves }) {
   }, [curves]);
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="wish" stroke="#aaa" />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
           domain={[0, 1]}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v, _name, item) => formatProb(v, item.payload.hard)}
           labelFormatter={(n) => `By wish ${n}`}
         />
@@ -221,12 +221,12 @@ function PromoCumulativeChart({ curves }) {
           type="monotone"
           dataKey="cum"
           name="P(promo by this wish)"
-          stroke="#f0c419"
+          stroke="var(--accent)"
           dot={false}
           strokeWidth={2}
         />
-        <ReferenceLine x={90} stroke="#e25c5c" strokeDasharray="4 4" label={{ value: 'first hard pity', fill: '#e25c5c', position: 'top' }} />
-        <ReferenceLine x={180} stroke="#e25c5c" strokeDasharray="4 4" label={{ value: 'guaranteed', fill: '#e25c5c', position: 'top' }} />
+        <ReferenceLine x={90} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'first hard pity', fill: 'var(--danger)', position: 'top', offset: 12 }} />
+        <ReferenceLine x={180} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'guaranteed', fill: 'var(--danger)', position: 'top', offset: 12 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -249,17 +249,17 @@ function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
   }, [curves, curvesNoCR, maxWishes]);
 
   return (
-    <ResponsiveContainer width="100%" height={360}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="wish" stroke="#aaa" />
+    <ResponsiveContainer width="100%" height={380}>
+      <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
         <YAxis
-          stroke="#aaa"
+          stroke="var(--chart-axis)"
           tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
           domain={[0, 1]}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
           formatter={(v, name, item) => {
             // dataKey is 'C2' or 'C2_noCR'.
             const isNoCR = name.endsWith('_noCR');
@@ -272,7 +272,7 @@ function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
           }}
           labelFormatter={(n) => `${n} wishes`}
         />
-        <Legend wrapperStyle={{ color: '#ddd' }} />
+        <Legend wrapperStyle={{ color: 'var(--text)' }} />
         {[0, 1, 2, 3, 4, 5, 6].map((c) => (
           <Line
             key={c}

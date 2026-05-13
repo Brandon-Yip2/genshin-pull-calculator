@@ -1,8 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { computeCurves, MAX_COPIES, Q_BY_COUNTER_NO_CR } from './probability.js';
 import Calculator from './Calculator.jsx';
 import Explanation from './Explanation.jsx';
 import './App.css';
+
+const THEME_KEY = 'gpc-theme';
+
+function initialTheme() {
+  if (typeof window === 'undefined') return 'dark';
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
 
 // Absolute worst case to guarantee C6 from the post-5.0 default counter=1.
 // Capturing Radiance caps consecutive losses at 2 from c=1, then forces a
@@ -14,6 +23,12 @@ const MAX_WISHES = 1080;
 
 export default function App() {
   const [tab, setTab] = useState('calculator');
+  const [theme, setTheme] = useState(initialTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
 
   // Compute curves once for both the current (with CR) and pre-5.0 (no CR)
   // systems. ~1080 pulls × 5760 states each, runs in well under a second.
@@ -26,7 +41,17 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Genshin Pull Probability Calculator</h1>
+        <div className="app-header-row">
+          <h1>Genshin Pull Probability Calculator</h1>
+          <button
+            className="theme-btn"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+        </div>
         <p className="subtitle">
           Exact probabilities (no simulation) for getting C0 through C6 of a
           limited 5★ character, including the post-5.0 Capturing Radiance

@@ -1,13 +1,47 @@
+/* Theme variables.
+ *
+ * Palette inspired by Genshin's UI vocabulary — warm gold accents and a cool
+ * sky-blue secondary, on a parchment-cream (light) or deep navy (dark)
+ * background. Colors are picked to evoke the look without copying it.
+ */
+
 :root {
-  --bg: #0d1014;
-  --bg-elev: #161b22;
-  --bg-elev-2: #1f262e;
-  --border: #2d343c;
-  --text: #e6edf3;
-  --text-dim: #8b95a0;
-  --accent: #ffc857;
-  --accent-2: #4f9cff;
-  --highlight: rgba(255, 200, 87, 0.12);
+  /* Default to dark; overridden by [data-theme="light"] below */
+  --bg: #0e1218;
+  --bg-elev: #161c25;
+  --bg-elev-2: #1f2733;
+  --border: #2a3140;
+  --text: #ece7d6;
+  --text-dim: #8e8a7c;
+  --accent: #f5c977;
+  --accent-2: #6fb1d9;
+  --highlight: rgba(245, 201, 119, 0.10);
+  --danger: #e87862;
+
+  --chart-grid: #2a3140;
+  --chart-axis: #8e8a7c;
+  --chart-line-1: #6fb1d9;
+  --chart-line-2: #b08fd6;
+  --tooltip-bg: #161c25;
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-elev: #f6f7f9;
+  --bg-elev-2: #ebedf1;
+  --border: #d8dce3;
+  --text: #1a1d24;
+  --text-dim: #6b6f78;
+  --accent: #2f6bdc;
+  --accent-2: #18958c;
+  --highlight: rgba(47, 107, 220, 0.10);
+  --danger: #c83a35;
+
+  --chart-grid: #d8dce3;
+  --chart-axis: #6b6f78;
+  --chart-line-1: #2f6bdc;
+  --chart-line-2: #7a4dca;
+  --tooltip-bg: #ffffff;
 }
 
 * {
@@ -20,6 +54,7 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  transition: background 0.15s, color 0.15s;
 }
 
 .app {
@@ -28,17 +63,50 @@ body {
   padding: 2rem 1.5rem 3rem;
 }
 
+.app-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .app-header h1 {
-  margin: 0 0 0.25rem;
+  margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .app-header .subtitle {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
   color: var(--text-dim);
   font-size: 0.95rem;
+}
+
+.theme-btn {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-btn:hover {
+  border-color: var(--accent);
 }
 
 .tabs {
@@ -136,6 +204,63 @@ body {
 .control-label {
   font-size: 0.9rem;
   color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wish-input {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  width: 90px;
+  text-align: right;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inline variant used inside the readout sentence — shorter, no border, looks
+ * like a number underline instead of a separate field. */
+.wish-input-inline {
+  background: transparent;
+  border: none;
+  border-bottom: 2px dashed var(--accent);
+  color: var(--text);
+  padding: 0 0.2rem;
+  width: 4.2em;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1em;
+  border-radius: 0;
+  margin: 0 0.1rem;
+}
+
+.wish-input-inline:focus {
+  outline: none;
+  border-bottom-color: var(--accent-2);
+  border-bottom-style: solid;
+}
+
+.wish-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Hide native number-input spin buttons (looks cleaner with the slider). */
+.wish-input::-webkit-outer-spin-button,
+.wish-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.wish-input { -moz-appearance: textfield; }
+
+.slider-wrap {
+  position: relative;
+  padding-bottom: 1.75rem;
 }
 
 .control input[type="range"] {
@@ -144,12 +269,28 @@ body {
   cursor: pointer;
 }
 
-.range-ticks {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
+.tick-marker {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 500;
+}
+
+.tick-marker::before {
+  content: '';
+  position: absolute;
+  top: -0.85rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 5px;
+  background: var(--text-dim);
+  opacity: 0.55;
 }
 
 .const-buttons {
@@ -177,7 +318,7 @@ body {
 .const-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #1a1100;
+  color: var(--bg);
   font-weight: 600;
 }
 
@@ -253,7 +394,7 @@ body {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.5rem 1.25rem;
 }
 
 .explanation h2 {
@@ -261,6 +402,13 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--accent);
+}
+
+.explanation h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 0 0 0.5rem;
 }
 
 .explanation p {
@@ -292,11 +440,10 @@ body {
   margin-top: 0.5rem;
 }
 
-.explanation h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  margin: 0 0 0.5rem;
+/* Add breathing room between in-section text and a chart that follows it,
+ * so reference-line labels (e.g. "soft pity") don't visually collide. */
+.explanation .recharts-responsive-container {
+  margin-top: 0.5rem;
 }
 
 .toggle-row {
@@ -320,8 +467,8 @@ body {
 }
 
 .warning-box {
-  background: rgba(255, 100, 50, 0.08);
-  border: 1px solid rgba(255, 100, 50, 0.35);
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
   color: var(--text);
   border-radius: 6px;
   padding: 0.75rem 1rem;
@@ -331,7 +478,7 @@ body {
 }
 
 .warning-box strong {
-  color: #ff8857;
+  color: var(--danger);
 }
 
 .results-table .dim {

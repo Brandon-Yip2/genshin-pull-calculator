@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 
 const PRIMOS_PER_WISH = 160;
@@ -14,6 +14,32 @@ function fmtPrimos(n) {
 export default function Calculator({ curves, maxWishes }) {
   const [wishes, setWishes] = useState(80);
   const [targetC, setTargetC] = useState(0); // 0..6 -> C0..C6
+  const [inputStr, setInputStr] = useState(String(wishes));
+
+  // When `wishes` changes from outside the input (slider, etc.), resync the
+  // display string. We don't clobber the input while the user is typing a
+  // value that already parses to the same `wishes` (so leading zeros they
+  // accidentally typed get stripped on the next keystroke, not their own).
+  useEffect(() => {
+    const parsed = inputStr === '' ? null : Number(inputStr);
+    if (parsed !== wishes) setInputStr(String(wishes));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wishes]);
+
+  function handleInputChange(raw) {
+    // Allow only digits.
+    let s = raw.replace(/[^0-9]/g, '');
+    // Strip leading zeros while leaving "0" as-is and "" as-is.
+    s = s.replace(/^0+(?=\d)/, '');
+    setInputStr(s);
+    const v = s === '' ? 0 : Number(s);
+    setWishes(Math.max(0, Math.min(maxWishes, v)));
+  }
+
+  function handleInputBlur() {
+    // Restore canonical display on blur (e.g. empty -> "0").
+    setInputStr(String(wishes));
+  }
 
   const k = targetK(targetC);
   const p = curves.atLeast[k][wishes];
@@ -25,7 +51,16 @@ export default function Calculator({ curves, maxWishes }) {
       <div className="readout">
         <div className="readout-label">
           Probability of reaching <strong>{CONST_LABELS[targetC]}</strong> with{' '}
-          <strong>{wishes}</strong> wishes
+          <input
+            type="text"
+            inputMode="numeric"
+            className="wish-input wish-input-inline"
+            value={inputStr}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onBlur={handleInputBlur}
+            onFocus={(e) => e.target.select()}
+          />{' '}
+          wishes
           <span className="primo-cost"> ({fmtPrimos(cost)} primogems)</span>
         </div>
         <div className="readout-value">{formatProb(p, isHardGuarantee)}</div>
@@ -41,20 +76,35 @@ export default function Calculator({ curves, maxWishes }) {
 
       <div className="controls">
         <label className="control">
-          <span className="control-label">Wishes available: {wishes}</span>
-          <input
-            type="range"
-            min="0"
-            max={maxWishes}
-            value={wishes}
-            onChange={(e) => setWishes(Number(e.target.value))}
-          />
-          <div className="range-ticks">
-            <span>0</span>
-            <span>180 (C0)</span>
-            <span>450 (C2)</span>
-            <span>810 (C4)</span>
-            <span>{maxWishes} (C6)</span>
+          <div className="slider-wrap">
+            <input
+              type="range"
+              min="0"
+              max={maxWishes}
+              value={wishes}
+              onChange={(e) => setWishes(Number(e.target.value))}
+            />
+            {[
+              { v: 0,    label: '0' },
+              { v: 180,  label: 'C0' },
+              { v: 360,  label: 'C1' },
+              { v: 450,  label: 'C2' },
+              { v: 630,  label: 'C3' },
+              { v: 810,  label: 'C4' },
+              { v: 900,  label: 'C5' },
+              { v: 1080, label: 'C6' },
+            ].map(({ v, label }) => {
+              // Compensate for the slider thumb's finite width (~16px).
+              // The thumb center travels from `thumbHalfPx` to
+              // `trackWidth - thumbHalfPx`, not 0..trackWidth.
+              const ratio = v / maxWishes;
+              const left = `calc(${ratio * 100}% + (0.5 - ${ratio}) * 16px)`;
+              return (
+                <span key={v} className="tick-marker" style={{ left }}>
+                  {label}
+                </span>
+              );
+            })}
           </div>
         </label>
 
