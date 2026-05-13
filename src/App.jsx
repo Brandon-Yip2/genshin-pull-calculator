@@ -1,122 +1,64 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useMemo } from 'react';
+import { computeCurves, MAX_COPIES } from './probability.js';
+import Calculator from './Calculator.jsx';
+import Explanation from './Explanation.jsx';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Absolute worst case to guarantee C6: 7 copies × (lose at hard pity 90 +
+// guaranteed at next hard pity 90) = 7 × 180 = 1260 wishes. Capturing Radiance
+// can only ever help, never hurt, so it doesn't extend this bound.
+const MAX_WISHES = 1260;
+
+export default function App() {
+  const [tab, setTab] = useState('calculator');
+
+  // Compute the curves once and pass them to both tabs.
+  // ~2000 pulls × 5760 states is ~11M operations; runs in well under a second.
+  const curves = useMemo(() => computeCurves(MAX_WISHES), []);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <div className="app">
+      <header className="app-header">
+        <h1>Genshin Pull Probability Calculator</h1>
+        <p className="subtitle">
+          Exact probabilities (no simulation) for getting C0 through C6 of a
+          limited 5★ character, including the post-5.0 Capturing Radiance
+          mechanic.
+        </p>
+        <nav className="tabs">
+          <button
+            className={tab === 'calculator' ? 'tab active' : 'tab'}
+            onClick={() => setTab('calculator')}
+          >
+            Calculator
+          </button>
+          <button
+            className={tab === 'explanation' ? 'tab active' : 'tab'}
+            onClick={() => setTab('explanation')}
+          >
+            How it works
+          </button>
+        </nav>
+      </header>
+      <main className="app-main">
+        {tab === 'calculator' && (
+          <Calculator curves={curves} maxWishes={MAX_WISHES} maxCopies={MAX_COPIES} />
+        )}
+        {tab === 'explanation' && (
+          <Explanation curves={curves} maxWishes={MAX_WISHES} />
+        )}
+      </main>
+      <footer className="app-footer">
+        Pure-math model. Source on{' '}
+        <a
+          href="https://github.com/"
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          GitHub
+        </a>
+        . Not affiliated with HoYoverse.
+      </footer>
+    </div>
+  );
 }
-
-export default App
