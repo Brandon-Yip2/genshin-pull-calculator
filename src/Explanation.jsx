@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { fiveStarRate, MAX_PITY, MAX_COPIES } from './probability.js';
+import { fiveStarRate, MAX_PITY, MAX_COPIES, CR_MODELS } from './probability.js';
 import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 
 // Generic non-hard formatter for tooltips on the per-pull / per-wish-mass
@@ -356,7 +356,65 @@ function CRImpactTable({ curves, curvesNoCR }) {
   );
 }
 
-export default function Explanation({ curves, curvesNoCR, maxWishes }) {
+function ModelBreakdownBar({ q }) {
+  const crWin = q;
+  const naturalWin = (1 - q) * 0.5;
+  const loss = (1 - q) * 0.5;
+  const fmt = (v) => (v * 100).toFixed(1) + '%';
+  return (
+    <div className="cr-bar">
+      <div className="cr-bar-seg cr-bar-natwin" style={{ width: `${naturalWin * 100}%` }}>
+        <span>Win {fmt(naturalWin)}</span>
+      </div>
+      <div className="cr-bar-seg cr-bar-crwin" style={{ width: `${crWin * 100}%` }}>
+        <span>CR {fmt(crWin)}</span>
+      </div>
+      <div className="cr-bar-seg cr-bar-loss" style={{ width: `${loss * 100}%` }}>
+        <span>Loss {fmt(loss)}</span>
+      </div>
+    </div>
+  );
+}
+
+function ModelComparisonChart({ curvesByModel, maxWishes }) {
+  const data = useMemo(() => {
+    const rows = [];
+    const ids = Object.keys(curvesByModel);
+    for (let n = 0; n <= maxWishes; n += 10) {
+      const row = { wish: n };
+      for (const id of ids) {
+        // Show C2+ as the most CR-sensitive cumulative curve (CR doesn't
+        // affect C0; barely affects C1; most visible in the middle range).
+        row[id] = curvesByModel[id].atLeast[3][n];
+      }
+      rows.push(row);
+    }
+    return rows;
+  }, [curvesByModel, maxWishes]);
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
+        <YAxis
+          stroke="var(--chart-axis)"
+          tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
+          domain={[0, 1]}
+        />
+        <Tooltip
+          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+          formatter={(v) => formatProb(v, false)}
+          labelFormatter={(n) => `${n} wishes`}
+        />
+        <Legend wrapperStyle={{ color: 'var(--text)' }} />
+        <Line type="monotone" dataKey="official" name="Official-derived (q₂≈9%)" stroke="var(--chart-line-1)" dot={false} strokeWidth={2} />
+        <Line type="monotone" dataKey="community" name="Community 75/25 (q₂=50%)" stroke="var(--accent)" dot={false} strokeWidth={2} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWishes, crModel }) {
   const [showNoCR, setShowNoCR] = useState(false);
   return (
     <div className="explanation">
@@ -436,7 +494,9 @@ export default function Explanation({ curves, curvesNoCR, maxWishes }) {
         <p>
           Capturing Radiance ("CR") is a counter, 0–3, that tracks how many
           50/50s you've recently lost. It can override a loss into a win, but
-          only when the counter is high enough.
+          only when the counter is high enough. By default the counter starts
+          at 1 (per the post-5.0 baseline diagram from CN community
+          analysis).
         </p>
         <p><strong>Counter transitions</strong> (only when a 50/50 actually fires — guaranteed wins from a prior loss don't change the counter):</p>
         <ul>
@@ -445,23 +505,69 @@ export default function Explanation({ curves, curvesNoCR, maxWishes }) {
           <li>Counter 2, natural win → 1; <em>CR triggers</em> with probability q₂ → 1; loss → 3</li>
           <li>Counter 3 — next 50/50 is forced into a CR-win → counter 1</li>
         </ul>
+
+        <h3 style={{ marginTop: '1rem' }}>The q₂ debate — two competing models</h3>
         <p>
-          The official rules state P(promo on a 50/50, including CR) ={' '}
-          <strong>55%</strong>. Solving for q₂ from the stationary distribution
-          of the counter chain gives <strong>q₂ = 1/11 ≈ 9.09%</strong>. With
-          this value the long-run promo rate per pull works out to ~1.103%,
-          matching the official number.
+          The probability of CR triggering at counter 2 (q₂) is{' '}
+          <strong>not officially published</strong>. Two main theories exist
+          in the community, and the calculator lets you switch between them.
+        </p>
+
+        <div className="model-card-row">
+          <div className={'model-card' + (crModel === 'official' ? ' active' : '')}>
+            <div className="model-card-title">{CR_MODELS.official.label}</div>
+            <div className="model-card-q">q₂ = 1/11 ≈ 9.09%</div>
+            <ModelBreakdownBar q={CR_MODELS.official.q[2]} />
+            <p className="model-card-body">
+              Back-solved from HoYoverse's announced "55% consolidated promo
+              rate." Assumes the official number is exact in steady state.
+              Mathematically clean, matches the published 1.103% per-pull
+              promo rate, but assumes infinite pulls.
+            </p>
+          </div>
+          <div className={'model-card' + (crModel === 'community' ? ' active' : '')}>
+            <div className="model-card-title">{CR_MODELS.community.label}</div>
+            <div className="model-card-q">q₂ = 50%</div>
+            <ModelBreakdownBar q={CR_MODELS.community.q[2]} />
+            <p className="model-card-body">
+              Player heuristic: "the third 50/50 is more like 75/25 in your
+              favor." Steady-state promo rate works out to ~57.1%, which
+              <em> disagrees</em> with the official 55%. Some community
+              analysts argue HoYoverse's published rates run a few percent low
+              (HSR's "50/50" is empirically ~56/44, etc.), so the true rate
+              may be above 55%.
+            </p>
+          </div>
+        </div>
+
+        <p style={{ marginTop: '1rem' }}>
+          The two models give the same answer for C0 and very nearly the same
+          for C1, but the gap widens fast for C2+. Here's P(reach C2) under
+          each model — the gap shows where CR's value most affects your real
+          wishes:
+        </p>
+        <ModelComparisonChart curvesByModel={curvesByModel} maxWishes={maxWishes} />
+        <p className="caption">
+          The Calculator currently uses the <strong>{CR_MODELS[crModel].label}</strong>{' '}
+          model ({CR_MODELS[crModel].short}). Switch at the top of the
+          Calculator tab.
+        </p>
+
+        <h3 style={{ marginTop: '1.5rem' }}>What CR means for getting C0 (and other constellations)</h3>
+        <p>
+          <strong>For C0:</strong> CR has no effect, in either model. The C0
+          path involves at most one 50/50 (at the starting counter, 0 or 1).
+          Both models have q = 0 at counters 0 and 1, so CR can't trigger.
+          Whether you win that 50/50 directly or lose and take the next 5★
+          via the regular post-loss guarantee, you arrive at C0 the same way
+          you would under the pre-5.0 system.
         </p>
         <p>
-          <strong>What this means for getting C0:</strong> nothing. You can
-          reach C0 with at most 1 loss, so the counter never gets to 2 in the
-          C0 path — CR never fires. C0 odds are unaffected by CR.
-        </p>
-        <p>
-          <strong>What it means for higher constellations:</strong> CR starts
-          to bite at C2+. With longer pull sequences the counter can hit 2 or
-          3, giving you extra promos you wouldn't get under the pure 50/50 +
-          guarantee system. The effect is small but cumulative.
+          <strong>For C1+:</strong> CR starts to matter. As you pull more,
+          the counter can climb to 2 (where q₂ matters) or 3 (forced CR win).
+          The two models disagree on how much CR helps in the q₂=2 region —
+          which is exactly the region most "going for higher constellations"
+          paths spend their time in.
         </p>
       </section>
 

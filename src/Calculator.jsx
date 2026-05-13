@@ -1,5 +1,40 @@
 import { useState, useEffect } from 'react';
 import { formatProb, hardGuaranteeWishForCopies } from './format.js';
+import { CR_MODELS } from './probability.js';
+
+// Visual breakdown of what happens at counter=2 under a given model.
+// Three outcome bands: natural win, CR-triggered win, loss (→ guarantee).
+function CounterTwoBreakdown({ q }) {
+  const crWin = q;
+  const naturalWin = (1 - q) * 0.5;
+  const loss = (1 - q) * 0.5;
+  const fmt = (v) => (v * 100).toFixed(1) + '%';
+  return (
+    <div className="cr-bar">
+      <div
+        className="cr-bar-seg cr-bar-natwin"
+        style={{ width: `${naturalWin * 100}%` }}
+        title={`Natural 50/50 win: ${fmt(naturalWin)}`}
+      >
+        <span>Win {fmt(naturalWin)}</span>
+      </div>
+      <div
+        className="cr-bar-seg cr-bar-crwin"
+        style={{ width: `${crWin * 100}%` }}
+        title={`Capturing Radiance triggers: ${fmt(crWin)}`}
+      >
+        <span>CR {fmt(crWin)}</span>
+      </div>
+      <div
+        className="cr-bar-seg cr-bar-loss"
+        style={{ width: `${loss * 100}%` }}
+        title={`Loss → next 5★ guaranteed: ${fmt(loss)}`}
+      >
+        <span>Loss {fmt(loss)}</span>
+      </div>
+    </div>
+  );
+}
 
 const PRIMOS_PER_WISH = 160;
 
@@ -11,7 +46,7 @@ function fmtPrimos(n) {
   return n.toLocaleString();
 }
 
-export default function Calculator({ curves, maxWishes }) {
+export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
   const [wishes, setWishes] = useState(80);
   const [targetC, setTargetC] = useState(0); // 0..6 -> C0..C6
   const [inputStr, setInputStr] = useState(String(wishes));
@@ -46,8 +81,38 @@ export default function Calculator({ curves, maxWishes }) {
   const isHardGuarantee = wishes >= hardGuaranteeWishForCopies(k);
   const cost = wishes * PRIMOS_PER_WISH;
 
+  const activeModel = CR_MODELS[crModel];
   return (
     <div className="calculator">
+      <div className="cr-picker">
+        <div className="cr-picker-header">
+          <strong>Capturing Radiance model</strong>
+          <span className="cr-picker-help">
+            The probability that CR triggers at counter 2 (q₂) is debated.
+            Pick the model you want the calculator to use.
+          </span>
+        </div>
+        <div className="cr-picker-options">
+          {Object.values(CR_MODELS).map((m) => (
+            <button
+              key={m.id}
+              className={'cr-opt' + (crModel === m.id ? ' active' : '')}
+              onClick={() => setCrModel(m.id)}
+            >
+              <div className="cr-opt-title">{m.label}</div>
+              <div className="cr-opt-sub">{m.short}</div>
+            </button>
+          ))}
+        </div>
+        <div className="cr-picker-vis">
+          <div className="cr-picker-vis-label">
+            What happens on a 50/50 at <code>counter = 2</code>:
+          </div>
+          <CounterTwoBreakdown q={activeModel.q[2]} />
+          <div className="cr-picker-summary">{activeModel.summary}</div>
+        </div>
+      </div>
+
       <div className="readout">
         <div className="readout-label">
           Probability of reaching <strong>{CONST_LABELS[targetC]}</strong> with{' '}

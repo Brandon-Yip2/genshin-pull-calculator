@@ -1,16 +1,28 @@
 import { useState, useMemo, useEffect } from 'react';
-import { computeCurves, MAX_COPIES, Q_BY_COUNTER_NO_CR } from './probability.js';
+import {
+  computeCurves,
+  MAX_COPIES,
+  Q_BY_COUNTER_NO_CR,
+  CR_MODELS,
+} from './probability.js';
 import Calculator from './Calculator.jsx';
 import Explanation from './Explanation.jsx';
 import './App.css';
 
 const THEME_KEY = 'gpc-theme';
+const CR_MODEL_KEY = 'gpc-cr-model';
 
 function initialTheme() {
   if (typeof window === 'undefined') return 'dark';
   const stored = localStorage.getItem(THEME_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
   return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function initialCrModel() {
+  if (typeof window === 'undefined') return 'official';
+  const stored = localStorage.getItem(CR_MODEL_KEY);
+  return CR_MODELS[stored] ? stored : 'official';
 }
 
 // Absolute worst case to guarantee C6 from the post-5.0 default counter=1.
@@ -24,19 +36,32 @@ const MAX_WISHES = 1080;
 export default function App() {
   const [tab, setTab] = useState('calculator');
   const [theme, setTheme] = useState(initialTheme);
+  const [crModel, setCrModel] = useState(initialCrModel);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
-  // Compute curves once for both the current (with CR) and pre-5.0 (no CR)
-  // systems. ~1080 pulls × 5760 states each, runs in well under a second.
-  const curves = useMemo(() => computeCurves(MAX_WISHES), []);
+  useEffect(() => {
+    localStorage.setItem(CR_MODEL_KEY, crModel);
+  }, [crModel]);
+
+  // Pre-compute curves for every supported CR model + the no-CR pre-5.0
+  // baseline. Each is ~1080 pulls × 5760 states; total compute time well
+  // under a second on mount, then it's just an array lookup per slider tick.
+  const curvesByModel = useMemo(() => {
+    const out = {};
+    for (const id of Object.keys(CR_MODELS)) {
+      out[id] = computeCurves(MAX_WISHES, { qByCounter: CR_MODELS[id].q });
+    }
+    return out;
+  }, []);
   const curvesNoCR = useMemo(
     () => computeCurves(MAX_WISHES, { qByCounter: Q_BY_COUNTER_NO_CR }),
     []
   );
+  const curves = curvesByModel[crModel];
 
   return (
     <div className="app">
@@ -74,13 +99,21 @@ export default function App() {
       </header>
       <main className="app-main">
         {tab === 'calculator' && (
-          <Calculator curves={curves} maxWishes={MAX_WISHES} maxCopies={MAX_COPIES} />
+          <Calculator
+            curves={curves}
+            maxWishes={MAX_WISHES}
+            maxCopies={MAX_COPIES}
+            crModel={crModel}
+            setCrModel={setCrModel}
+          />
         )}
         {tab === 'explanation' && (
           <Explanation
             curves={curves}
+            curvesByModel={curvesByModel}
             curvesNoCR={curvesNoCR}
             maxWishes={MAX_WISHES}
+            crModel={crModel}
           />
         )}
       </main>

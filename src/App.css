@@ -378,6 +378,196 @@ body {
   border-radius: 6px;
 }
 
+/* ------- CR model picker ------- */
+
+.cr-picker {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cr-picker-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cr-picker-header strong {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cr-picker-help {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.cr-picker-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.cr-opt {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cr-opt:hover {
+  border-color: var(--accent-2);
+}
+
+.cr-opt.active {
+  border-color: var(--accent);
+  background: var(--highlight);
+}
+
+.cr-opt-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.cr-opt.active .cr-opt-title {
+  color: var(--accent);
+}
+
+.cr-opt-sub {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-picker-vis {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cr-picker-vis-label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.cr-picker-vis-label code {
+  background: var(--bg-elev-2);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+.cr-picker-summary {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* The horizontal stacked-bar visualization. */
+.cr-bar {
+  display: flex;
+  width: 100%;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-bar-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  font-weight: 600;
+  min-width: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: width 0.25s ease;
+}
+
+.cr-bar-seg span {
+  padding: 0 0.4rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.cr-bar-natwin { background: #4a8c5f; }
+.cr-bar-crwin  { background: #c08c2a; }
+.cr-bar-loss   { background: #b54a3f; }
+
+@media (max-width: 600px) {
+  .cr-picker-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Side-by-side model cards in the Explanation tab. */
+.model-card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.model-card {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.model-card.active {
+  border-color: var(--accent);
+}
+
+.model-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.model-card.active .model-card-title {
+  color: var(--accent);
+}
+
+.model-card-q {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.model-card-body {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .model-card-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .assumptions strong {
   color: var(--text);
 }

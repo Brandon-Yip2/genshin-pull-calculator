@@ -177,6 +177,38 @@ export function step(dist, qByCounter = Q_BY_COUNTER) {
 // counter=2 and no forced win at counter=3.
 export const Q_BY_COUNTER_NO_CR = [0, 0, 0, 0];
 
+// Community "75/25" theory for the CR mechanic: at counter=2 there's a 50%
+// chance CR triggers (giving a 75% overall win at c=2). Doesn't match the
+// official 55% consolidated rate (steady-state long-run promo is ~57%) but
+// matches some short-run empirical observations and the community heuristic
+// that "you can't lose three in a row, the third tries 75/25".
+export const Q_BY_COUNTER_COMMUNITY = [0, 0, 0.5, 1];
+
+// Catalog of available CR models, exposed to the UI.
+export const CR_MODELS = {
+  official: {
+    id: 'official',
+    label: 'Official-derived',
+    short: 'q₂ ≈ 9.09%',
+    q: Q_BY_COUNTER,
+    pWin: 0.5455,
+    summary:
+      'Solves q₂ backward from HoYoverse’s announced 55% consolidated ' +
+      'promo rate. Matches the published number exactly in steady state.',
+  },
+  community: {
+    id: 'community',
+    label: 'Community 75/25',
+    short: 'q₂ = 50%',
+    q: Q_BY_COUNTER_COMMUNITY,
+    pWin: 0.75,
+    summary:
+      'Player-community theory: at counter 2 the game runs a 75/25 in your ' +
+      'favor. Disagrees with the announced 55% (gives ~57%) but matches the ' +
+      'heuristic that you can’t lose three in a row.',
+  },
+};
+
 // Marginal P(copies >= k) given a distribution.
 export function probCopiesAtLeast(dist, k) {
   if (k <= 0) return 1;
