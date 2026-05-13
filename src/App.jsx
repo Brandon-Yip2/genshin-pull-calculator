@@ -4,10 +4,13 @@ import Calculator from './Calculator.jsx';
 import Explanation from './Explanation.jsx';
 import './App.css';
 
-// Absolute worst case to guarantee C6: 7 copies × (lose at hard pity 90 +
-// guaranteed at next hard pity 90) = 7 × 180 = 1260 wishes. Capturing Radiance
-// can only ever help, never hurt, so it doesn't extend this bound.
-const MAX_WISHES = 1260;
+// Absolute worst case to guarantee C6 from the post-5.0 default counter=1.
+// Capturing Radiance caps consecutive losses at 2 from c=1, then forces a
+// CR-win (90 pulls instead of another 180-pull L,G cycle). The
+// pull-maximizing path is L,G | L,G | forced-W repeating: 3 promos per
+// 450 pulls, plus a partial trailing L,G = 180 pulls.
+// For C6 (7 promos): 2 full macros + 1 leftover L,G = 900 + 180 = 1080.
+const MAX_WISHES = 1080;
 
 export default function App() {
   const [tab, setTab] = useState('calculator');

@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { formatProb } from './format.js';
+import { formatProb, hardGuaranteeWishForCopies } from './format.js';
+
+describe('hardGuaranteeWishForCopies', () => {
+  // Worst-case path from counter=1 is L,G | L,G | forced CR-W = 3 promos in
+  // 450 pulls. Trailing partial L,G chains contribute 180 pulls per promo.
+  it('matches the per-copies worst-case path', () => {
+    expect(hardGuaranteeWishForCopies(0)).toBe(0);
+    expect(hardGuaranteeWishForCopies(1)).toBe(180);  // C0
+    expect(hardGuaranteeWishForCopies(2)).toBe(360);  // C1
+    expect(hardGuaranteeWishForCopies(3)).toBe(450);  // C2
+    expect(hardGuaranteeWishForCopies(4)).toBe(630);  // C3
+    expect(hardGuaranteeWishForCopies(5)).toBe(810);  // C4
+    expect(hardGuaranteeWishForCopies(6)).toBe(900);  // C5
+    expect(hardGuaranteeWishForCopies(7)).toBe(1080); // C6
+  });
+});
 
 describe('formatProb', () => {
   it('returns 100.00% only when caller asserts hard guarantee', () => {

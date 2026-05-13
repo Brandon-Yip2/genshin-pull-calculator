@@ -3,14 +3,29 @@
 // or genuinely close-to-1 values that should not be misrepresented as
 // certainty.
 //
-// Hard guarantee thresholds:
+// Hard guarantee thresholds (assuming default starting CR counter = 1):
 //   - P(any 5★) is exactly 1 at wish 90 (hard pity).
-//   - P(reach k copies of the limited) is exactly 1 at wish k * 180
-//     (worst-case sequence: lose at hard pity, guarantee at next hard pity,
-//     repeat k times).
+//   - P(reach k copies) is exactly 1 at the hardest possible path through
+//     the Capturing Radiance chain. From counter=1, the maximum-pulls path
+//     is `L,G | L,G | forced CR-W` repeating — 3 promos per "macro" in
+//     5 5★ events × 90 = 450 pulls. Trailing partial macro: each leftover
+//     promo is at most 1 more L,G = 180 pulls.
+//
+// So for copies n: hardWish(n) = floor(n/3)*450 + (n%3)*180.
+//   n=1 (C0): 180     n=5 (C4): 810
+//   n=2 (C1): 360     n=6 (C5): 900
+//   n=3 (C2): 450     n=7 (C6): 1080
+//   n=4 (C3): 630
+//
+// Without CR, this would naively be n*180; CR caps consecutive losses at 2
+// (from c=1) before forcing a W, which costs only 90 instead of 180,
+// shortening the worst case for C2 and beyond.
 
 export function hardGuaranteeWishForCopies(copies) {
-  return copies * 180;
+  if (copies <= 0) return 0;
+  const fullMacros = Math.floor(copies / 3);
+  const leftover = copies % 3;
+  return fullMacros * 450 + leftover * 180;
 }
 
 // `hard` = caller has determined the displayed value represents a true hard

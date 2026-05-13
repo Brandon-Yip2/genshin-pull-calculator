@@ -31,9 +31,10 @@ export default function Calculator({ curves, maxWishes }) {
         <div className="readout-value">{formatProb(p, isHardGuarantee)}</div>
         {isHardGuarantee && (
           <div className="readout-note">
-            Hard guarantee: at {hardGuaranteeWishForCopies(k)} wishes, this
-            constellation is mathematically certain (worst case = lose at
-            hard pity, guaranteed at next hard pity, repeated {k} times).
+            Hard guarantee at {hardGuaranteeWishForCopies(k)} wishes — even on
+            the absolute worst-case path through the 50/50, guarantee, and
+            Capturing Radiance chain, you cannot fail to reach this
+            constellation by this many pulls.
           </div>
         )}
       </div>
@@ -50,10 +51,10 @@ export default function Calculator({ curves, maxWishes }) {
           />
           <div className="range-ticks">
             <span>0</span>
-            <span>180 (C0 max)</span>
-            <span>540</span>
-            <span>900</span>
-            <span>{maxWishes} (C6 max)</span>
+            <span>180 (C0)</span>
+            <span>450 (C2)</span>
+            <span>810 (C4)</span>
+            <span>{maxWishes} (C6)</span>
           </div>
         </label>
 
@@ -104,6 +105,9 @@ export default function Calculator({ curves, maxWishes }) {
         <strong>Assumptions:</strong> fresh banner state (pity 0, no guarantee,
         Capturing Radiance counter starts at 1 per the post-5.0 default).
         Soft pity model is fitted to the empirical CSV (step at pity 76).
+        The "100%" threshold per constellation accounts for CR: from c=1 the
+        worst-case path is two L,G cycles followed by a forced CR-win
+        (3 promos in 450 pulls), repeated.
       </div>
     </div>
   );
