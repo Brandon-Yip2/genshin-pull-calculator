@@ -11,9 +11,13 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { fiveStarRate, MAX_PITY, MAX_COPIES } from './probability.js';
+import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 
+// Generic non-hard formatter for tooltips on the per-pull / per-wish-mass
+// charts (these are NOT cumulative probabilities approaching 1 in any
+// meaningful way, so the hard-guarantee logic isn't needed).
 function pctFmt(v) {
-  return (v * 100).toFixed(2) + '%';
+  return formatProb(v, false);
 }
 
 const CONST_COLORS = [
@@ -106,12 +110,14 @@ function FirstFiveStarChart({ curves, maxWishes }) {
 }
 
 function FirstFiveStarCumulativeChart({ curves }) {
+  // Only wish 90 (hard pity) gives a true 100% guarantee. Below that,
+  // values can be very close to 1 but not exactly 1.
   const data = useMemo(() => {
     const rows = [];
     let cum = 0;
     for (let n = 0; n <= 90; n++) {
       cum += curves.firstFiveAt[n];
-      rows.push({ wish: n, cum });
+      rows.push({ wish: n, cum, hard: n >= 90 });
     }
     return rows;
   }, [curves]);
@@ -128,7 +134,7 @@ function FirstFiveStarCumulativeChart({ curves }) {
         />
         <Tooltip
           contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
-          formatter={(v) => pctFmt(v)}
+          formatter={(v, _name, item) => formatProb(v, item.payload.hard)}
           labelFormatter={(n) => `By wish ${n}`}
         />
         <Line
@@ -187,7 +193,11 @@ function PromoCumulativeChart({ curves }) {
   const data = useMemo(() => {
     const rows = [];
     for (let n = 0; n <= 180; n++) {
-      rows.push({ wish: n, cum: curves.atLeast[1][n] });
+      rows.push({
+        wish: n,
+        cum: curves.atLeast[1][n],
+        hard: n >= hardGuaranteeWishForCopies(1),
+      });
     }
     return rows;
   }, [curves]);
@@ -204,7 +214,7 @@ function PromoCumulativeChart({ curves }) {
         />
         <Tooltip
           contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
-          formatter={(v) => pctFmt(v)}
+          formatter={(v, _name, item) => formatProb(v, item.payload.hard)}
           labelFormatter={(n) => `By wish ${n}`}
         />
         <Line
@@ -247,7 +257,12 @@ function ConstellationCurvesChart({ curves, maxWishes }) {
         />
         <Tooltip
           contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
-          formatter={(v) => pctFmt(v)}
+          formatter={(v, name, item) => {
+            // name is e.g. 'C2'; the hard-guarantee wish for Cn is (n+1) * 180.
+            const cIndex = Number(name.slice(1));
+            const hard = item.payload.wish >= hardGuaranteeWishForCopies(cIndex + 1);
+            return formatProb(v, hard);
+          }}
           labelFormatter={(n) => `${n} wishes`}
         />
         <Legend wrapperStyle={{ color: '#ddd' }} />

@@ -1,14 +1,11 @@
 import { useState } from 'react';
+import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 
 const PRIMOS_PER_WISH = 160;
 
 const CONST_LABELS = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6'];
 // k in atLeast[k] = number of copies. C0 = 1 copy, C6 = 7 copies.
 const targetK = (cIndex) => cIndex + 1;
-
-function pct(x) {
-  return (x * 100).toFixed(2) + '%';
-}
 
 function fmtPrimos(n) {
   return n.toLocaleString();
@@ -20,6 +17,7 @@ export default function Calculator({ curves, maxWishes }) {
 
   const k = targetK(targetC);
   const p = curves.atLeast[k][wishes];
+  const isHardGuarantee = wishes >= hardGuaranteeWishForCopies(k);
   const cost = wishes * PRIMOS_PER_WISH;
 
   return (
@@ -30,7 +28,14 @@ export default function Calculator({ curves, maxWishes }) {
           <strong>{wishes}</strong> wishes
           <span className="primo-cost"> ({fmtPrimos(cost)} primogems)</span>
         </div>
-        <div className="readout-value">{pct(p)}</div>
+        <div className="readout-value">{formatProb(p, isHardGuarantee)}</div>
+        {isHardGuarantee && (
+          <div className="readout-note">
+            Hard guarantee: at {hardGuaranteeWishForCopies(k)} wishes, this
+            constellation is mathematically certain (worst case = lose at
+            hard pity, guaranteed at next hard pity, repeated {k} times).
+          </div>
+        )}
       </div>
 
       <div className="controls">
@@ -82,11 +87,12 @@ export default function Calculator({ curves, maxWishes }) {
             {CONST_LABELS.map((label, i) => {
               const kk = targetK(i);
               const pp = curves.atLeast[kk][wishes];
+              const hard = wishes >= hardGuaranteeWishForCopies(kk);
               return (
                 <tr key={label} className={i === targetC ? 'highlight' : ''}>
                   <td>{label}</td>
                   <td>{kk}</td>
-                  <td>{pct(pp)}</td>
+                  <td>{formatProb(pp, hard)}</td>
                 </tr>
               );
             })}

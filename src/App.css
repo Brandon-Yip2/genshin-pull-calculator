@@ -108,6 +108,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.readout-note {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .primo-cost {
   color: var(--text-dim);
   font-size: 0.85rem;
