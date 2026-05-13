@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -232,21 +232,24 @@ function PromoCumulativeChart({ curves }) {
   );
 }
 
-function ConstellationCurvesChart({ curves, maxWishes }) {
+function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
   const data = useMemo(() => {
     const rows = [];
     for (let n = 0; n <= maxWishes; n += 10) {
       const row = { wish: n };
       for (let k = 1; k <= MAX_COPIES; k++) {
         row['C' + (k - 1)] = curves.atLeast[k][n];
+        if (curvesNoCR) {
+          row['C' + (k - 1) + '_noCR'] = curvesNoCR.atLeast[k][n];
+        }
       }
       rows.push(row);
     }
     return rows;
-  }, [curves, maxWishes]);
+  }, [curves, curvesNoCR, maxWishes]);
 
   return (
-    <ResponsiveContainer width="100%" height={340}>
+    <ResponsiveContainer width="100%" height={360}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#333" />
         <XAxis dataKey="wish" stroke="#aaa" />
@@ -258,9 +261,13 @@ function ConstellationCurvesChart({ curves, maxWishes }) {
         <Tooltip
           contentStyle={{ background: '#1a1a1a', border: '1px solid #444' }}
           formatter={(v, name, item) => {
-            // name is e.g. 'C2'; the hard-guarantee wish for Cn is (n+1) * 180.
-            const cIndex = Number(name.slice(1));
-            const hard = item.payload.wish >= hardGuaranteeWishForCopies(cIndex + 1);
+            // dataKey is 'C2' or 'C2_noCR'.
+            const isNoCR = name.endsWith('_noCR');
+            const cIndex = Number(name.slice(1).replace('_noCR', ''));
+            // Hard guarantee only applies to the live (with-CR) system; the
+            // pre-5.0 system has its own (looser) bounds — treat them as
+            // never reaching a hard guarantee for display purposes.
+            const hard = !isNoCR && item.payload.wish >= hardGuaranteeWishForCopies(cIndex + 1);
             return formatProb(v, hard);
           }}
           labelFormatter={(n) => `${n} wishes`}
@@ -271,9 +278,24 @@ function ConstellationCurvesChart({ curves, maxWishes }) {
             key={c}
             type="monotone"
             dataKey={'C' + c}
+            name={'C' + c}
             stroke={CONST_COLORS[c]}
             dot={false}
             strokeWidth={2}
+          />
+        ))}
+        {showNoCR && [0, 1, 2, 3, 4, 5, 6].map((c) => (
+          <Line
+            key={'noCR' + c}
+            type="monotone"
+            dataKey={'C' + c + '_noCR'}
+            name={'C' + c + ' (pre-5.0)'}
+            stroke={CONST_COLORS[c]}
+            dot={false}
+            strokeWidth={1.5}
+            strokeDasharray="5 5"
+            opacity={0.6}
+            legendType="none"
           />
         ))}
       </LineChart>
@@ -281,7 +303,61 @@ function ConstellationCurvesChart({ curves, maxWishes }) {
   );
 }
 
-export default function Explanation({ curves, maxWishes }) {
+function findThreshold(arr, target) {
+  for (let n = 0; n < arr.length; n++) if (arr[n] >= target) return n;
+  return -1;
+}
+
+function CRImpactTable({ curves, curvesNoCR }) {
+  const rows = useMemo(() => {
+    const out = [];
+    for (let k = 1; k <= MAX_COPIES; k++) {
+      const cn = 'C' + (k - 1);
+      const get = (cum, t) => findThreshold(cum, t);
+      out.push({
+        cn,
+        p50w: get(curves.atLeast[k], 0.5),
+        p50n: get(curvesNoCR.atLeast[k], 0.5),
+        p90w: get(curves.atLeast[k], 0.9),
+        p90n: get(curvesNoCR.atLeast[k], 0.9),
+        p99w: get(curves.atLeast[k], 0.99),
+        p99n: get(curvesNoCR.atLeast[k], 0.99),
+      });
+    }
+    return out;
+  }, [curves, curvesNoCR]);
+
+  return (
+    <table className="results-table">
+      <thead>
+        <tr>
+          <th rowSpan="2">Constellation</th>
+          <th colSpan="2">50% wishes</th>
+          <th colSpan="2">90% wishes</th>
+          <th colSpan="2">99% wishes</th>
+        </tr>
+        <tr>
+          <th>now</th><th>pre-5.0</th>
+          <th>now</th><th>pre-5.0</th>
+          <th>now</th><th>pre-5.0</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.cn}>
+            <td>{r.cn}</td>
+            <td>{r.p50w}</td><td className="dim">{r.p50n}</td>
+            <td>{r.p90w}</td><td className="dim">{r.p90n}</td>
+            <td>{r.p99w}</td><td className="dim">{r.p99n}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export default function Explanation({ curves, curvesNoCR, maxWishes }) {
+  const [showNoCR, setShowNoCR] = useState(false);
   return (
     <div className="explanation">
       <section>
@@ -416,10 +492,47 @@ export default function Explanation({ curves, maxWishes }) {
           Putting it all together — here's the cumulative probability of
           reaching each constellation as a function of wishes spent:
         </p>
-        <ConstellationCurvesChart curves={curves} maxWishes={maxWishes} />
+
+        <label className="toggle-row">
+          <input
+            type="checkbox"
+            checked={showNoCR}
+            onChange={(e) => setShowNoCR(e.target.checked)}
+          />
+          <span>Overlay pre-5.0 curves (no Capturing Radiance) — for comparison only</span>
+        </label>
+        {showNoCR && (
+          <div className="warning-box">
+            ⚠️ The dashed lines show what the same probability calculation
+            would look like under the <strong>pre-5.0 system</strong>, before
+            Capturing Radiance was added. <strong>This is no longer how
+            Genshin works</strong> — it's shown to illustrate how much CR
+            shifted the odds. Many older simulations and calculators still
+            use the pre-5.0 model and underreport your true chances.
+          </div>
+        )}
+
+        <ConstellationCurvesChart
+          curves={curves}
+          curvesNoCR={showNoCR ? curvesNoCR : null}
+          maxWishes={maxWishes}
+          showNoCR={showNoCR}
+        />
         <p className="caption">
           Each curve shifts right and flattens. Going from C5 to C6 takes
           almost as many wishes as the entire C0–C2 journey.
+        </p>
+
+        <h3 style={{ marginTop: '1.5rem' }}>How much does CR shift the threshold wishes?</h3>
+        <p>
+          Wishes needed to reach 50%, 90%, and 99% probability per
+          constellation, current system vs. pre-5.0:
+        </p>
+        <CRImpactTable curves={curves} curvesNoCR={curvesNoCR} />
+        <p className="caption">
+          CR shaves 1–10+ wishes off the typical thresholds and grows in
+          absolute size for higher constellations. The pre-5.0 numbers are
+          what 1B-pull simulations from before patch 5.0 still report.
         </p>
       </section>
     </div>

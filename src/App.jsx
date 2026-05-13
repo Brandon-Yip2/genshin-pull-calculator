@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { computeCurves, MAX_COPIES } from './probability.js';
+import { computeCurves, MAX_COPIES, Q_BY_COUNTER_NO_CR } from './probability.js';
 import Calculator from './Calculator.jsx';
 import Explanation from './Explanation.jsx';
 import './App.css';
@@ -15,9 +15,13 @@ const MAX_WISHES = 1080;
 export default function App() {
   const [tab, setTab] = useState('calculator');
 
-  // Compute the curves once and pass them to both tabs.
-  // ~2000 pulls × 5760 states is ~11M operations; runs in well under a second.
+  // Compute curves once for both the current (with CR) and pre-5.0 (no CR)
+  // systems. ~1080 pulls × 5760 states each, runs in well under a second.
   const curves = useMemo(() => computeCurves(MAX_WISHES), []);
+  const curvesNoCR = useMemo(
+    () => computeCurves(MAX_WISHES, { qByCounter: Q_BY_COUNTER_NO_CR }),
+    []
+  );
 
   return (
     <div className="app">
@@ -48,7 +52,11 @@ export default function App() {
           <Calculator curves={curves} maxWishes={MAX_WISHES} maxCopies={MAX_COPIES} />
         )}
         {tab === 'explanation' && (
-          <Explanation curves={curves} maxWishes={MAX_WISHES} />
+          <Explanation
+            curves={curves}
+            curvesNoCR={curvesNoCR}
+            maxWishes={MAX_WISHES}
+          />
         )}
       </main>
       <footer className="app-footer">

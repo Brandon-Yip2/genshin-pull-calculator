@@ -127,7 +127,7 @@ export function freshDistribution({
 // Copies are capped at MAX_COPIES; once you've reached C6 the constellation
 // state stays at MAX_COPIES (we still keep simulating in case the user wants
 // joint stats, but for our outputs only "reach k+" is needed).
-export function step(dist) {
+export function step(dist, qByCounter = Q_BY_COUNTER) {
   const next = new Float64Array(STATE_COUNT);
   for (let p = 1; p <= MAX_PITY; p++) {
     const r = fiveStarRate(p);
@@ -150,7 +150,7 @@ export function step(dist) {
               // Guaranteed promo. Counter unchanged.
               next[flatIndex(1, 0, c, newCopies)] += mass * r;
             } else {
-              const q = Q_BY_COUNTER[c];
+              const q = qByCounter[c];
               const pWin = q + (1 - q) * 0.5;
               const pLoss = 1 - pWin; // = (1 - q) * 0.5
               // Win
@@ -171,6 +171,11 @@ export function step(dist) {
   }
   return next;
 }
+
+// q array representing the pre-5.0 system: no Capturing Radiance at all.
+// Counter still tracks losses (for parity), but no probabilistic boost at
+// counter=2 and no forced win at counter=3.
+export const Q_BY_COUNTER_NO_CR = [0, 0, 0, 0];
 
 // Marginal P(copies >= k) given a distribution.
 export function probCopiesAtLeast(dist, k) {
@@ -215,7 +220,8 @@ export function probCopiesEquals(dist, k) {
 //     firstPromoAt: Float64Array(maxPulls+1),                 // P(first promo at exactly N)
 //   }
 export function computeCurves(maxPulls, options = {}) {
-  let dist = freshDistribution(options);
+  const { qByCounter = Q_BY_COUNTER, ...freshOpts } = options;
+  let dist = freshDistribution(freshOpts);
   const atLeast = {};
   for (let k = 1; k <= MAX_COPIES; k++) {
     atLeast[k] = new Float64Array(maxPulls + 1);
@@ -240,7 +246,7 @@ export function computeCurves(maxPulls, options = {}) {
   let cumAnyPromo = 0;
 
   for (let n = 1; n <= maxPulls; n++) {
-    dist = step(dist);
+    dist = step(dist, qByCounter);
     for (let k = 1; k <= MAX_COPIES; k++) {
       atLeast[k][n] = probCopiesAtLeast(dist, k);
     }
