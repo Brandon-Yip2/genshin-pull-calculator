@@ -120,7 +120,7 @@ export default function App() {
       <footer className="app-footer">
         Pure-math model. Source on{' '}
         <a
-          href="https://github.com/"
+          href="https://github.com/Brandon-Yip2/genshin-pull-calculator"
           target="_blank"
           rel="noopener noreferrer"
         >
