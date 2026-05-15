@@ -199,9 +199,9 @@ export const CR_MODELS = {
     q: Q_BY_COUNTER,
     pWin: 0.5455,
     summary:
-      'Back-solved from HoYoverse’s published 55% consolidated promo rate. ' +
-      'The safer estimate — slightly more pessimistic, exactly consistent ' +
-      'with the announced number.',
+      'CR rescues a 50/50 loss ~9% of the time at counter 2. Back-solved ' +
+      'from HoYoverse’s published 55% consolidated promo rate — exactly ' +
+      'consistent with the announced number.',
   },
   community: {
     id: 'community',
@@ -210,9 +210,9 @@ export const CR_MODELS = {
     q: Q_BY_COUNTER_COMMUNITY,
     pWin: 0.75,
     summary:
-      'Based on the player heuristic "you can’t lose three 50/50s in a ' +
-      'row." Slightly more generous; gives a long-run promo rate of ~57%, ' +
-      'a couple percent above the announced 55%.',
+      'CR rescues a 50/50 loss 50% of the time at counter 2, producing the ' +
+      '"75/25 in your favor" outcome players often quote. Long-run promo ' +
+      'rate works out to ~57%, slightly above the announced 55%.',
   },
 };
 

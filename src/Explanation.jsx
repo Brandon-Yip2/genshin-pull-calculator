@@ -357,9 +357,9 @@ function CRImpactTable({ curves, curvesNoCR }) {
 }
 
 function ModelBreakdownBar({ q }) {
-  const crWin = q;
-  const naturalWin = (1 - q) * 0.5;
-  const loss = (1 - q) * 0.5;
+  const naturalWin = 0.5;
+  const crWin = 0.5 * q;
+  const loss = 0.5 * (1 - q);
   const fmt = (v) => (v * 100).toFixed(1) + '%';
   return (
     <div className="cr-bar">
@@ -502,15 +502,24 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         <ul>
           <li>Counter 0, win → stays 0; loss → 1</li>
           <li>Counter 1, win → 0; loss → 2</li>
-          <li>Counter 2, natural win → 1; <em>CR triggers</em> with probability q₂ → 1; loss → 3</li>
+          <li>Counter 2 — run the 50/50 normally. On a win → counter 1. On a loss, <em>CR rescues</em> the loss into a win with probability q₂ → counter 1; otherwise the loss stands → counter 3</li>
           <li>Counter 3 — next 50/50 is forced into a CR-win → counter 1</li>
         </ul>
-
-        <h3 style={{ marginTop: '1rem' }}>The q₂ debate — two competing models</h3>
         <p>
-          The probability of CR triggering at counter 2 (q₂) is{' '}
-          <strong>not officially published</strong>. Two main theories exist
-          in the community, and the calculator lets you switch between them.
+          The key mental model: <strong>the 50/50 is always a fair coin
+          flip.</strong> CR doesn't replace it — CR is a separate rescue
+          mechanism applied <em>after</em> the coin lands on loss. So at
+          counter 2, the natural win rate stays at exactly 50% and CR carves
+          into the 50% loss territory by q₂ × 50%.
+        </p>
+
+        <h3 style={{ marginTop: '1rem' }}>The q₂ debate — two competing estimates</h3>
+        <p>
+          The rescue probability at counter 2 (q₂) is{' '}
+          <strong>not officially published</strong>. Two main community
+          estimates exist, and the calculator lets you switch between them.
+          They produce nearly identical results for low/mid wish counts and
+          diverge only modestly at higher constellations.
         </p>
 
         <div className="model-card-row">
@@ -520,9 +529,9 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
             <ModelBreakdownBar q={CR_MODELS.official.q[2]} />
             <p className="model-card-body">
               Back-solved from HoYoverse's announced "55% consolidated promo
-              rate." Assumes the official number is exact in steady state.
-              Mathematically clean, matches the published 1.103% per-pull
-              promo rate, but assumes infinite pulls.
+              rate." Assumes the published number is exact in steady state.
+              Mathematically clean and conservative; matches the official
+              1.103% per-pull promo rate.
             </p>
           </div>
           <div className={'model-card' + (crModel === 'community' ? ' active' : '')}>
@@ -530,27 +539,27 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
             <div className="model-card-q">q₂ = 50%</div>
             <ModelBreakdownBar q={CR_MODELS.community.q[2]} />
             <p className="model-card-body">
-              Player heuristic: "the third 50/50 is more like 75/25 in your
-              favor." Steady-state promo rate works out to ~57.1%, which
-              <em> disagrees</em> with the official 55%. Some community
-              analysts argue HoYoverse's published rates run a few percent low
-              (HSR's "50/50" is empirically ~56/44, etc.), so the true rate
-              may be above 55%.
+              Captures the heuristic "the third 50/50 ends up 75/25 in your
+              favor" — 50% natural win + 25% CR rescue = 75% total. Steady-
+              state promo rate ~57%, slightly above the announced 55%. Some
+              community analysts believe HoYoverse's rates run a touch low
+              (HSR's "50/50" appears closer to 56/44 empirically).
             </p>
           </div>
         </div>
 
         <p style={{ marginTop: '1rem' }}>
           The two models give the same answer for C0 and very nearly the same
-          for C1, but the gap widens fast for C2+. Here's P(reach C2) under
-          each model — the gap shows where CR's value most affects your real
+          for C1, but the gap widens for C2+. Here's P(reach C2+) under each
+          model — the gap shows where CR's value most affects your real
           wishes:
         </p>
         <ModelComparisonChart curvesByModel={curvesByModel} maxWishes={maxWishes} />
         <p className="caption">
           The Calculator currently uses the <strong>{CR_MODELS[crModel].label}</strong>{' '}
-          model ({CR_MODELS[crModel].short}). Switch at the top of the
-          Calculator tab.
+          model ({CR_MODELS[crModel].short}). Switch in the "Advanced:
+          Capturing Radiance model" section at the bottom of the Calculator
+          tab.
         </p>
 
         <h3 style={{ marginTop: '1.5rem' }}>What CR means for getting C0 (and other constellations)</h3>

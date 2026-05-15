@@ -3,12 +3,19 @@ import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 import { CR_MODELS } from './probability.js';
 import Info from './Info.jsx';
 
-// Visual breakdown of what happens at counter=2 under a given model.
-// Three outcome bands: natural win, CR-triggered win, loss (→ guarantee).
+// Visual breakdown of what happens on a 50/50 at counter=2.
+// The 50/50 itself is always a fair coin flip — natural win is always 50%.
+// Capturing Radiance is a post-hoc rescue: when the coin lands on "loss",
+// CR has a probability q to flip that loss into a win. So:
+//   - natural win:  50%               (the coin landed on win)
+//   - CR-rescued:   50% × q           (lost the coin, but CR saved it)
+//   - final loss:   50% × (1 − q)     (lost the coin and CR didn't fire)
+// This produces identical final probabilities to "roll CR first" framings
+// but matches how players intuitively think about the mechanic.
 function CounterTwoBreakdown({ q }) {
-  const crWin = q;
-  const naturalWin = (1 - q) * 0.5;
-  const loss = (1 - q) * 0.5;
+  const naturalWin = 0.5;
+  const crWin = 0.5 * q;
+  const loss = 0.5 * (1 - q);
   const fmt = (v) => (v * 100).toFixed(1) + '%';
   return (
     <div className="cr-bar">
@@ -222,6 +229,13 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
             counts — the difference is at most a few percent, and grows only
             for higher constellations (C2+). The default is fine for most
             users.
+          </p>
+          <p className="cr-settings-note">
+            <strong>How to read the bar:</strong> the 50/50 itself is always
+            a fair coin flip (50% win, 50% loss). Capturing Radiance is a{' '}
+            <em>rescue</em>: when the coin lands on "loss", CR has a probability
+            q₂ to flip that loss into a win. So the bar shows: natural-win{' '}
+            (50%) · CR-rescued (q₂ × 50%) · final loss ((1−q₂) × 50%).
           </p>
           <div className="cr-picker-options">
             {Object.values(CR_MODELS).map((m) => (
