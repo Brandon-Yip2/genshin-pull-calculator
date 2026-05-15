@@ -184,28 +184,35 @@ export const Q_BY_COUNTER_NO_CR = [0, 0, 0, 0];
 // that "you can't lose three in a row, the third tries 75/25".
 export const Q_BY_COUNTER_COMMUNITY = [0, 0, 0.5, 1];
 
-// Catalog of available CR models, exposed to the UI.
+// Catalog of available CR models, exposed to the UI. HoYoverse has NOT
+// published the underlying q₂ probability, so both entries below are
+// community estimates. They give very similar results for low/mid wish
+// counts (≤ a few percent apart) and diverge slightly at C2+. The
+// "official" label refers to the model derived from HoYoverse's
+// published 55% consolidated promo rate — it doesn't mean the q₂ value
+// itself is official.
 export const CR_MODELS = {
   official: {
     id: 'official',
-    label: 'Official-derived',
+    label: 'Conservative (matches 55%)',
     short: 'q₂ ≈ 9.09%',
     q: Q_BY_COUNTER,
     pWin: 0.5455,
     summary:
-      'Solves q₂ backward from HoYoverse’s announced 55% consolidated ' +
-      'promo rate. Matches the published number exactly in steady state.',
+      'Back-solved from HoYoverse’s published 55% consolidated promo rate. ' +
+      'The safer estimate — slightly more pessimistic, exactly consistent ' +
+      'with the announced number.',
   },
   community: {
     id: 'community',
-    label: 'Community 75/25',
+    label: 'Optimistic (75/25 heuristic)',
     short: 'q₂ = 50%',
     q: Q_BY_COUNTER_COMMUNITY,
     pWin: 0.75,
     summary:
-      'Player-community theory: at counter 2 the game runs a 75/25 in your ' +
-      'favor. Disagrees with the announced 55% (gives ~57%) but matches the ' +
-      'heuristic that you can’t lose three in a row.',
+      'Based on the player heuristic "you can’t lose three 50/50s in a ' +
+      'row." Slightly more generous; gives a long-run promo rate of ~57%, ' +
+      'a couple percent above the announced 55%.',
   },
 };
 

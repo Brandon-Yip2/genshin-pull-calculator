@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 import { CR_MODELS } from './probability.js';
+import Info from './Info.jsx';
 
 // Visual breakdown of what happens at counter=2 under a given model.
 // Three outcome bands: natural win, CR-triggered win, loss (→ guarantee).
@@ -21,9 +22,9 @@ function CounterTwoBreakdown({ q }) {
       <div
         className="cr-bar-seg cr-bar-crwin"
         style={{ width: `${crWin * 100}%` }}
-        title={`Capturing Radiance triggers: ${fmt(crWin)}`}
+        title={`Capturing Radiance triggers (still a win): ${fmt(crWin)}`}
       >
-        <span>CR {fmt(crWin)}</span>
+        <span>CR win {fmt(crWin)}</span>
       </div>
       <div
         className="cr-bar-seg cr-bar-loss"
@@ -62,9 +63,7 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
   }, [wishes]);
 
   function handleInputChange(raw) {
-    // Allow only digits.
     let s = raw.replace(/[^0-9]/g, '');
-    // Strip leading zeros while leaving "0" as-is and "" as-is.
     s = s.replace(/^0+(?=\d)/, '');
     setInputStr(s);
     const v = s === '' ? 0 : Number(s);
@@ -72,7 +71,6 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
   }
 
   function handleInputBlur() {
-    // Restore canonical display on blur (e.g. empty -> "0").
     setInputStr(String(wishes));
   }
 
@@ -84,38 +82,16 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
   const activeModel = CR_MODELS[crModel];
   return (
     <div className="calculator">
-      <div className="cr-picker">
-        <div className="cr-picker-header">
-          <strong>Capturing Radiance model</strong>
-          <span className="cr-picker-help">
-            The probability that CR triggers at counter 2 (q₂) is debated.
-            Pick the model you want the calculator to use.
-          </span>
-        </div>
-        <div className="cr-picker-options">
-          {Object.values(CR_MODELS).map((m) => (
-            <button
-              key={m.id}
-              className={'cr-opt' + (crModel === m.id ? ' active' : '')}
-              onClick={() => setCrModel(m.id)}
-            >
-              <div className="cr-opt-title">{m.label}</div>
-              <div className="cr-opt-sub">{m.short}</div>
-            </button>
-          ))}
-        </div>
-        <div className="cr-picker-vis">
-          <div className="cr-picker-vis-label">
-            What happens on a 50/50 at <code>counter = 2</code>:
-          </div>
-          <CounterTwoBreakdown q={activeModel.q[2]} />
-          <div className="cr-picker-summary">{activeModel.summary}</div>
-        </div>
-      </div>
-
       <div className="readout">
         <div className="readout-label">
-          Probability of reaching <strong>{CONST_LABELS[targetC]}</strong> with{' '}
+          Probability of reaching{' '}
+          <strong>{CONST_LABELS[targetC]}</strong>
+          <Info label="What is a constellation?">
+            <strong>C0</strong> = first copy of the character.{' '}
+            <strong>C1–C6</strong> = extra copies that unlock upgrades. You
+            need 1+k copies of the limited 5★ to reach Ck.
+          </Info>{' '}
+          with{' '}
           <input
             type="text"
             inputMode="numeric"
@@ -131,8 +107,14 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
         <div className="readout-value">{formatProb(p, isHardGuarantee)}</div>
         {isHardGuarantee && (
           <div className="readout-note">
-            Hard guarantee at {hardGuaranteeWishForCopies(k)} wishes — even on
-            the absolute worst-case path through the 50/50, guarantee, and
+            <strong>Hard guarantee</strong>
+            <Info label="What is a hard guarantee?">
+              The wish count at which it's <em>mathematically impossible</em>{' '}
+              to not have this constellation, even on the worst-case path
+              through every 50/50, guarantee, and Capturing Radiance trigger.
+            </Info>
+            {' '}at {hardGuaranteeWishForCopies(k)} wishes — even on the
+            absolute worst-case path through the 50/50, guarantee, and
             Capturing Radiance chain, you cannot fail to reach this
             constellation by this many pulls.
           </div>
@@ -146,6 +128,7 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
               type="range"
               min="0"
               max={maxWishes}
+              step="1"
               value={wishes}
               onChange={(e) => setWishes(Number(e.target.value))}
             />
@@ -216,13 +199,60 @@ export default function Calculator({ curves, maxWishes, crModel, setCrModel }) {
         </table>
       </div>
 
+      <details className="cr-settings">
+        <summary>
+          <span className="cr-settings-label">
+            Advanced: Capturing Radiance model
+            <Info label="What is Capturing Radiance?">
+              A post-5.0 pity mechanic that can override a 50/50 loss into a
+              win after consecutive losses. HoYoverse hasn't published the
+              exact trigger probability, so the calculator offers two
+              community estimates.
+            </Info>
+          </span>
+          <span className="cr-settings-current">
+            using <strong>{activeModel.label}</strong> · {activeModel.short}
+          </span>
+        </summary>
+        <div className="cr-settings-body">
+          <p className="cr-settings-note">
+            <strong>Both options below are community estimates.</strong>{' '}
+            HoYoverse hasn't published the exact Capturing Radiance trigger
+            rate. The two models give very similar results for most wish
+            counts — the difference is at most a few percent, and grows only
+            for higher constellations (C2+). The default is fine for most
+            users.
+          </p>
+          <div className="cr-picker-options">
+            {Object.values(CR_MODELS).map((m) => (
+              <button
+                key={m.id}
+                className={'cr-opt' + (crModel === m.id ? ' active' : '')}
+                onClick={() => setCrModel(m.id)}
+              >
+                <div className="cr-opt-title">{m.label}</div>
+                <div className="cr-opt-sub">{m.short}</div>
+              </button>
+            ))}
+          </div>
+          <div className="cr-picker-vis">
+            <div className="cr-picker-vis-label">
+              What happens on a 50/50 at <code>counter = 2</code> under{' '}
+              <strong>{activeModel.label}</strong>:
+            </div>
+            <CounterTwoBreakdown q={activeModel.q[2]} />
+            <div className="cr-picker-summary">{activeModel.summary}</div>
+          </div>
+        </div>
+      </details>
+
       <div className="assumptions">
-        <strong>Assumptions:</strong> fresh banner state (pity 0, no guarantee,
-        Capturing Radiance counter starts at 1 per the post-5.0 default).
-        Soft pity model is fitted to the empirical CSV (step at pity 76).
-        The "100%" threshold per constellation accounts for CR: from c=1 the
-        worst-case path is two L,G cycles followed by a forced CR-win
-        (3 promos in 450 pulls), repeated.
+        <strong>Assumptions:</strong> fresh banner state (pity 0, no
+        guarantee, Capturing Radiance counter starts at 1 per the post-5.0
+        default). Soft pity model is fitted to a 1B-pull empirical dataset
+        (step at pity 76). The "100%" threshold per constellation accounts
+        for CR: from c=1 the worst-case path is two L,G cycles followed by a
+        forced CR-win (3 promos in 450 pulls), repeated.
       </div>
     </div>
   );

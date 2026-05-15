@@ -407,8 +407,8 @@ function ModelComparisonChart({ curvesByModel, maxWishes }) {
           labelFormatter={(n) => `${n} wishes`}
         />
         <Legend wrapperStyle={{ color: 'var(--text)' }} />
-        <Line type="monotone" dataKey="official" name="Official-derived (q₂≈9%)" stroke="var(--chart-line-1)" dot={false} strokeWidth={2} />
-        <Line type="monotone" dataKey="community" name="Community 75/25 (q₂=50%)" stroke="var(--accent)" dot={false} strokeWidth={2} />
+        <Line type="monotone" dataKey="official" name="Conservative (q₂≈9%)" stroke="var(--chart-line-1)" dot={false} strokeWidth={2} />
+        <Line type="monotone" dataKey="community" name="Optimistic (q₂=50%)" stroke="var(--accent)" dot={false} strokeWidth={2} />
       </LineChart>
     </ResponsiveContainer>
   );

@@ -267,6 +267,15 @@ body {
   width: 100%;
   accent-color: var(--accent);
   cursor: pointer;
+  /* `pan-x` ensures touchscreens and trackpad drags follow the slider
+   * smoothly instead of getting hijacked by the browser as a scroll/swipe
+   * gesture mid-drag. Pairs with `touch-action: manipulation` to disable
+   * double-tap zoom on the thumb. */
+  touch-action: pan-x;
+  /* Make sure the input sits above any decorative siblings inside
+   * .slider-wrap so nothing absorbs pointer events during a drag. */
+  position: relative;
+  z-index: 1;
 }
 
 .tick-marker {
@@ -378,34 +387,7 @@ body {
   border-radius: 6px;
 }
 
-/* ------- CR model picker ------- */
-
-.cr-picker {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem 1.25rem 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.cr-picker-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.cr-picker-header strong {
-  color: var(--text);
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.cr-picker-help {
-  color: var(--text-dim);
-  font-size: 0.82rem;
-}
+/* ------- CR model picker (used inside the .cr-settings disclosure) ------- */
 
 .cr-picker-options {
   display: grid;
@@ -508,8 +490,8 @@ body {
   overflow: hidden;
 }
 
-.cr-bar-natwin { background: #4a8c5f; }
-.cr-bar-crwin  { background: #c08c2a; }
+.cr-bar-natwin { background: #3d7a52; }     /* deeper green: natural win */
+.cr-bar-crwin  { background: #7dc98a; }     /* light green: CR win — still a win */
 .cr-bar-loss   { background: #b54a3f; }
 
 @media (max-width: 600px) {
@@ -693,4 +675,171 @@ body {
 
 .app-footer a:hover {
   text-decoration: underline;
+}
+
+/* ------- Advanced settings disclosure (CR model picker) ------- */
+
+.cr-settings {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: 1.25rem;
+}
+
+.cr-settings > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  user-select: none;
+  border-radius: 10px;
+}
+
+.cr-settings > summary::-webkit-details-marker { display: none; }
+
+.cr-settings > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.5rem;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.cr-settings[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.cr-settings > summary:hover {
+  background: var(--bg-elev-2);
+}
+
+.cr-settings-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cr-settings-current {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-settings-current strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.cr-settings-body {
+  padding: 0.25rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.cr-settings-note {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin: 0.6rem 0 0;
+  line-height: 1.55;
+}
+
+.cr-settings-note strong {
+  color: var(--text);
+}
+
+/* ------- Info icon + hover/focus tooltip ------- */
+
+.info-wrap {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+  margin: 0 0.15rem;
+  outline: none;
+  cursor: help;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  vertical-align: 0.05em;
+}
+
+.info-wrap:hover .info-icon,
+.info-wrap:focus .info-icon {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.info-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 280px;
+  background: var(--tooltip-bg, var(--bg-elev-2));
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
+}
+
+.info-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border);
+}
+
+.info-wrap:hover .info-popup,
+.info-wrap:focus .info-popup,
+.info-wrap:focus-within .info-popup {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .info-popup {
+    max-width: 240px;
+  }
+  .cr-settings > summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
