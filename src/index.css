@@ -1,8 +1,1689 @@
-html, body {
-  margin: 0;
-  padding: 0;
+@import 'tailwindcss';
+
+/* DaisyUI, with the built-in themes switched off so only the two Genshin
+   themes below exist. */
+@plugin 'daisyui' {
+  themes: false;
 }
 
+/* ---------------------------------------------------------------------------
+   Genshin Impact themes
+
+   The in-game look is not "one colour" -- it is four layers stacked, and the
+   contrast BETWEEN them is what makes it read as Genshin:
+
+     1. a deep slate backdrop (the pause-menu blue) with a soft warm bloom
+     2. slate-blue content panels with gold hairline borders and corner brackets
+     3. PARCHMENT surfaces -- cream with dark slate ink -- for the parts that
+        hold results and choices (buttons, dialogs, the reward readout)
+     4. saturated quality and element colour for anything item-shaped:
+        purple 4★, gold 5★, and the seven element hues on character cards
+
+   Layer 3 doing real work is the bit that keeps this from being a single hue:
+   every screen mixes dark slate, cream, gold, and at least one rarity/element
+   colour. Dark mode is the menu look, light mode is the bench/bag look; the
+   chrome header stays slate in both.
+   --------------------------------------------------------------------------- */
+
+@plugin 'daisyui/theme' {
+  name: 'genshin-dark';
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* Deliberately only faintly blue. The in-game slate is a desaturated
+     blue-grey (roughly #3b4255); going more saturated than that makes the whole
+     page read as a single wash of blue and buries the gold, cream and quality
+     colours that actually define the look. */
+  --color-base-100: #313848; /* slate panel */
+  --color-base-200: #191c26; /* page backdrop, near-neutral */
+  --color-base-300: #4d5877; /* borders / hairlines */
+  --color-base-content: #f0e8d9; /* warm parchment text, never pure white */
+
+  --color-primary: #d3bc8e; /* menu gold */
+  --color-primary-content: #23262f;
+  --color-secondary: #8ea3c9; /* the slate-blue from the menus */
+  --color-secondary-content: #12151c;
+  --color-accent: #ffd780; /* bright gold for emphasis */
+  --color-accent-content: #3a2c0e;
+  --color-neutral: #3b4255;
+  --color-neutral-content: #f0e8d9;
+
+  --color-info: #4cc2f1;
+  --color-info-content: #0b2230;
+  --color-success: #74c2a8;
+  --color-success-content: #0f2620;
+  --color-warning: #efb84b;
+  --color-warning-content: #2a2210;
+  --color-error: #e0736b;
+  --color-error-content: #2b1414;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.45rem;
+  --radius-box: 0.6rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'genshin-light';
+  color-scheme: light;
+
+  --color-base-100: #fbf7ec; /* parchment surface */
+  --color-base-200: #e2d7ba; /* parchment backdrop, a shade deeper so the
+                                 cream panels read as separate layers */
+  --color-base-300: #c2b18c;
+  --color-base-content: #3a4257; /* dark slate ink */
+
+  --color-primary: #8a6a28;
+  --color-primary-content: #fdf7e8;
+  --color-secondary: #46516b;
+  --color-secondary-content: #f6f1e2;
+  --color-accent: #b3762a;
+  --color-accent-content: #fff8e9;
+  --color-neutral: #3a4257;
+  --color-neutral-content: #f6f1e2;
+
+  --color-info: #2b7fa8;
+  --color-info-content: #f2fbfd;
+  --color-success: #2f7a5e;
+  --color-success-content: #f2fbf7;
+  --color-warning: #9a6a16;
+  --color-warning-content: #fdf8ec;
+  --color-error: #a9433d;
+  --color-error-content: #fdf3f2;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.45rem;
+  --radius-box: 0.6rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* The Genshin action-button gradient. Cream with dark slate ink in BOTH
+     themes -- that inversion is the single most recognisable trait of the UI,
+     so it is fixed rather than themed. */
+  --g-cream-hi: #fbf7ec;
+  --g-cream-lo: #ded2b8;
+  --g-ink: #3d4459;
+  --g-ink-dim: #5c6680;
+
+  /* The parchment surface itself (results panels, the reward readout). */
+  --g-parchment-hi: #fdf8ea;
+  --g-parchment-lo: #eadfc2;
+  --g-parchment-line: #bda166;
+
+  /* Slate chrome: header bar, panel wells, tab tracks. Fixed in both themes so
+     the light theme keeps a dark frame around its parchment. */
+  --g-slate-hi: #2e3750;
+  --g-slate-lo: #1a2030;
+
+  /* Recessed surfaces (tab tracks, nested wells). Themed, because a fixed dark
+     well would swallow dark ink text in light mode. */
+  --g-well: #1e222c;
+
+  --g-gold: var(--color-primary);
+  --g-gold-bright: var(--color-accent);
+  --g-hairline: color-mix(in oklab, var(--color-primary) 40%, transparent);
+
+  /* Genshin's item-quality ramp: rare purple, legendary gold. */
+  --g-r3: #4a7fa6;
+  --g-r4: #a367c9;
+  --g-r4b: #5b3d84;
+  --g-r5: #e2a63f;
+  --g-r5b: #96601f;
+
+  /* Element hues (mirrors ELEMENTS in data/roster.js). */
+  --g-anemo: #74c2a8;
+  --g-geo: #fab632;
+  --g-electro: #b08fc7;
+  --g-dendro: #a5c83b;
+  --g-hydro: #4cc2f1;
+  --g-pyro: #ef7938;
+  --g-cryo: #9fd6e9;
+
+  /* Semantic bridges, so Recharts and any leftover var() usages follow the
+     active theme automatically. */
+  --text: var(--color-base-content);
+  --text-dim: color-mix(in oklab, var(--color-base-content) 62%, transparent);
+  --border: var(--color-base-300);
+  --bg-elev: var(--color-base-200);
+  --highlight: color-mix(in oklab, var(--color-primary) 14%, var(--color-base-100));
+  --accent: var(--color-primary);
+  --accent-2: var(--color-accent);
+  --danger: var(--color-error);
+
+  --tooltip-bg: var(--color-base-100);
+  --chart-grid: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+  --chart-axis: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  --chart-line-1: var(--color-primary);
+  --chart-line-2: var(--color-accent);
+}
+
+html,
+body,
 #root {
-  min-height: 100vh;
+  min-height: 100%;
+}body {
+  margin: 0;
+  color: var(--color-base-content);
+  /* Just the base tone: the visible backdrop is the fixed .g-backdrop layer
+     below, which the panels let show through. */
+  background: var(--color-base-200);
+}
+
+/* ---------------------------------------------------------------------------
+   Blurred backdrop
+
+   The game renders its menus over a blurred screenshot of wherever you are
+   standing. That is the single biggest reason its cream rows do not read as a
+   slab of yellow: the landscape shows through them. So the same layers are
+   stacked here -- a bundled screenshot of the world, a painted landscape
+   underneath as a fallback, and a blue scrim -- and the panels above are
+   translucent with a backdrop blur.
+
+   The blur is deliberately *slight*. A heavily blurred backdrop reads as a
+   coloured smear rather than a place; the game only softens its world enough
+   to push it behind the UI, so that is all this does.
+   --------------------------------------------------------------------------- */
+
+/* A normal fixed layer at z-index 0, with the app content lifted above it in
+   App.jsx. (z-index: -1 would place it behind the body's own background, which
+   propagated to the canvas -- the layer would simply never be seen.) */
+.g-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.g-backdrop-mesh,
+.g-backdrop-scrim,
+.g-backdrop-grain {
+  position: absolute;
+  inset: 0;
+}
+
+/* Fallback only: a painted landscape (sky, a warm sun patch, green hills,
+   water) shown until the bundled screenshot loads, or if it is missing. */
+.g-backdrop-mesh {
+  transform: scale(1.06);
+  filter: blur(18px) saturate(1.2);
+  background:
+    radial-gradient(
+      34% 26% at 68% 18%,
+      rgb(255 250 226 / 0.95),
+      transparent 68%
+    ),
+    radial-gradient(
+      46% 36% at 18% 4%,
+      rgb(146 216 232 / 0.9),
+      transparent 70%
+    ),
+    radial-gradient(
+      56% 42% at 88% 50%,
+      rgb(120 200 150 / 0.85),
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 36% at 8% 78%,
+      rgb(72 158 176 / 0.9),
+      transparent 74%
+    ),
+    radial-gradient(
+      40% 30% at 46% 98%,
+      rgb(38 92 116 / 0.9),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #24536f 0%, #3d8a90 40%, #4f9d7c 68%, #2f6274 100%);
+}
+
+/* The bundled screenshot of the world: `public/backdrop.jpg`.
+
+   Only slightly blurred. The over-scan (+5%) hides the soft transparent edge a
+   blur leaves at the frame, without pushing the scale far enough to look like
+   a zoomed crop. `saturate` is pulled back a little because the scrim above
+   already deepens the colour, and the result reads closer to how in-game
+   menus look on a bright outdoor scene. */
+.g-backdrop-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 58%;
+  transform: scale(1.05);
+  filter: blur(7px) saturate(1.04) brightness(1.04);
+}
+
+/* The scrim: dark where the title bar and footer sit, lighter through the
+   middle so the landscape genuinely reads through the rows instead of being
+   tinted into the background. The middle is not *too* light, because a bright
+   daylight screenshot would otherwise lift the backdrop enough to wash out the
+   text that sits directly on it (see .g-world). */
+.g-backdrop-scrim {
+  background: linear-gradient(
+    180deg,
+    rgb(10 24 42 / 0.66) 0%,
+    rgb(12 30 52 / 0.38) 11%,
+    rgb(15 38 60 / 0.26) 45%,
+    rgb(13 33 52 / 0.36) 75%,
+    rgb(8 18 32 / 0.7) 100%
+  );
+}
+
+/* Faint grain, so the large flat gradients do not band. */
+.g-backdrop-grain {
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+
+/* ---------------------------------------------------------------------------
+   Text sitting directly on the world
+
+   The game solves this the same way: menu labels over a bright landscape carry
+   a soft dark halo, which is what keeps them legible without darkening the
+   whole backdrop into sludge. Applied at the containers that sit on the
+   landscape and switched off again inside every painted surface, so panels and
+   rows keep crisp unshadowed type.
+   --------------------------------------------------------------------------- */
+
+main,
+.g-hero {
+  text-shadow:
+    0 1px 2px rgb(4 12 24 / 0.85),
+    0 0 10px rgb(4 12 24 / 0.55);
+}
+
+.g-panel,
+.g-panel-parchment,
+.g-row,
+.g-well,
+.g-chip,
+.rarity-4,
+.rarity-5,
+.g-tab,
+.g-btn {
+  text-shadow: none;
+}
+
+/* Numerals in readouts and tables should not jitter as they change. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small uppercase caption above a heading, as on the game's menu headers. */
+.g-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-primary) 85%, transparent);
+}
+
+/* In the dark chrome the eyebrow keeps its own bright gold, since the themed
+   primary goes dark in light mode. */
+.g-hero .g-eyebrow {
+  color: #e7cf9b;
+}
+
+/* Tabs sitting on the dark chrome, in both themes. */
+.g-hero .g-tab {
+  color: color-mix(in oklab, #f2ead9 74%, transparent);
+}
+
+.g-hero .g-tab:hover {
+  color: #fffaee;
+  background: rgb(255 255 255 / 0.09);
+}
+
+
+
+/* Footer, matching the header chrome. */
+.g-footer {
+  color: color-mix(in oklab, #f2ead9 70%, transparent);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  background: linear-gradient(
+    180deg,
+    rgb(46 55 80 / 0.88),
+    rgb(26 32 48 / 0.82)
+  );
+  border-top: 2px solid color-mix(in oklab, var(--g-gold) 50%, transparent);
+}
+
+.g-footer a {
+  /* Fixed bright gold: the footer chrome is dark in both themes, so a themed
+     accent would go muddy in light mode. */
+  color: #ffd780;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Chrome header -- slate in BOTH themes, so light mode is never all parchment.
+   --------------------------------------------------------------------------- */
+
+.g-hero {
+  position: relative;
+  color: #f4ecdc;
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  background:
+    radial-gradient(
+      120% 150% at 10% -30%,
+      color-mix(in oklab, var(--g-gold-bright) 26%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      80% 120% at 100% 0%,
+      color-mix(in oklab, var(--g-hydro) 16%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(46 55 80 / 0.9),
+      rgb(26 32 48 / 0.82)
+    );
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+}
+
+.g-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--g-gold) 85%, transparent),
+    color-mix(in oklab, var(--g-gold-bright) 70%, transparent),
+    color-mix(in oklab, var(--g-gold) 85%, transparent),
+    transparent
+  );
+}
+
+.g-hero-title {
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  color: #f6eedd;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.45);
+}
+
+/* ---------------------------------------------------------------------------
+   Panels
+   --------------------------------------------------------------------------- */
+
+/* Slate panel with a gold hairline border, an inset top highlight, and the
+   four gold L-brackets Genshin puts at the corners of its content panels. */
+.g-panel {
+  position: relative;
+  border-radius: var(--radius-box);
+  border: 1px solid
+    color-mix(in oklab, var(--color-primary) 34%, var(--color-base-300));
+  /* Translucent with a backdrop blur, so the blurred landscape reads through
+     the panel the way it does in the game's menus. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-base-100) 87%, transparent),
+    color-mix(in oklab, var(--color-base-100) 78%, transparent)
+  );
+  backdrop-filter: blur(10px) saturate(1.05);
+  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+    0 8px 24px rgb(0 0 0 / 0.26);
+}
+
+.g-panel::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    linear-gradient(var(--g-gold), var(--g-gold)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right bottom / 1px 12px no-repeat;
+}
+
+/* Cream header bar, as on the game's item and settings panels. Put it on the
+   first <h3> of a panel that has p-5 and offset it with -mx-5 -mt-5 so it runs
+   full bleed, or let the rules below catch a collapsible panel's summary. */
+.g-head-bar {
+  background: linear-gradient(
+    180deg,
+    var(--g-parchment-hi),
+    var(--g-parchment-lo)
+  );
+  color: #3a4157;
+  border-bottom: 1px solid var(--g-parchment-line);
+  border-radius: calc(var(--radius-box) - 1px) calc(var(--radius-box) - 1px) 0 0;
+  padding: 0.6rem 0.9rem;
+}
+
+.g-head-bar .g-title {
+  color: #3a4157;
+}
+
+.g-head-bar .g-diamond {
+  background: linear-gradient(135deg, #e0b451, #a9822f);
+  box-shadow: none;
+}
+
+.g-head-bar .g-tab-count {
+  background: rgb(58 65 87 / 0.16);
+  color: #3a4157;
+}
+
+/* Collapsible panels (the Capturing Radiance / pity disclosures) get the same
+   cream bar, so a long page is a rhythm of slate and cream rather than one
+   uninterrupted field. */
+.g-panel > summary.collapse-title {
+  background: linear-gradient(
+    180deg,
+    var(--g-parchment-hi),
+    var(--g-parchment-lo)
+  );
+  color: #3a4157;
+  border-bottom: 1px solid var(--g-parchment-line);
+  border-radius: calc(var(--radius-box) - 1px) calc(var(--radius-box) - 1px) 0 0;
+}
+
+.g-panel > summary.collapse-title .g-title,
+.g-panel > summary.collapse-title strong {
+  color: #3a4157;
+}
+
+/* In light mode the well is a tanned recess rather than a dark one, so the
+   dark slate ink stays readable inside it. */
+[data-theme='genshin-light'] {
+  --g-well: #ded3b6;
+}
+
+/* A recessed well: the inner surface Genshin nests content in. */
+.g-well {
+  border-radius: var(--radius-field);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 18%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, black 22%, var(--color-base-200)),
+      var(--g-well)
+    );
+  box-shadow: inset 0 2px 10px rgb(0 0 0 / 0.4);
+}
+
+/* ---------------------------------------------------------------------------
+   Parchment surface -- the results readout, the choice rows, the dialogs.
+   Cream background, dark slate ink. This is the layer that breaks the monotony.
+   --------------------------------------------------------------------------- */
+
+.g-panel-parchment {
+  --g-gold: #b99a54;
+  position: relative;
+  border-radius: var(--radius-box);
+  border: 1px solid var(--g-parchment-line);
+  color: var(--g-ink);
+  background: linear-gradient(
+    180deg,
+    rgb(253 248 234 / 0.95),
+    rgb(234 223 194 / 0.91)
+  );
+  backdrop-filter: blur(10px) saturate(1.05);
+  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 rgb(255 253 246 / 0.9),
+    inset 0 -14px 26px -22px rgb(93 70 26 / 0.55),
+    0 10px 26px rgb(0 0 0 / 0.3);
+}
+
+.g-panel-parchment::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  opacity: 0.75;
+  background:
+    linear-gradient(var(--g-gold), var(--g-gold)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) right bottom / 1px 12px no-repeat;
+}
+
+/* Dark ink on cream, like the game's settings rows -- gold on cream only
+   reaches about 3:1, which is not enough for a label. The gold stays in the
+   ornaments next to the text. */
+.g-panel-parchment .text-primary,
+.g-panel-parchment .g-title {
+  color: #3a4157;
+}
+
+/* The big number on parchment is a deep bronze rather than bright gold: the
+   game keeps its cream rows at dark-ink contrast, and bright gold on cream
+   only reaches about 2.4:1. */
+.g-panel-parchment .g-stat {
+  color: #6b4710;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+.g-panel-parchment .g-diamond {
+  background: linear-gradient(135deg, #e0b451, #a9822f);
+  box-shadow: none;
+}
+
+.g-panel-parchment .g-rule {
+  background: linear-gradient(90deg, transparent, #c3a86a, transparent);
+}
+
+.g-panel-parchment .text-success {
+  color: #2f7a5e;
+}
+
+.g-panel-parchment .text-error {
+  color: #a9433d;
+}
+
+.g-panel-parchment .input,
+.g-panel-parchment .select,
+.g-panel-parchment .checkbox {
+  border-color: var(--g-parchment-line);
+  color: var(--g-ink);
+}
+
+.g-panel-parchment .input,
+.g-panel-parchment .select {
+  background: color-mix(in oklab, white 82%, var(--g-parchment-hi));
+}
+
+.g-panel-parchment .border-primary\/10,
+.g-panel-parchment .bg-primary\/10 {
+  background: rgb(255 252 240 / 0.75);
+}
+
+/* The highlighted (selected) row of a table on parchment. */
+.g-panel-parchment .bg-primary\/15 {
+  background: rgb(138 106 40 / 0.13);
+}
+
+/* Tables and rules inside a parchment panel, re-inked for dark-on-cream. */
+.g-panel-parchment .g-table th {
+  color: #7d5f1e;
+}
+
+.g-panel-parchment .g-table td {
+  color: var(--g-ink);
+  border-color: color-mix(in oklab, #8a6a28 24%, #ded3b4);
+}
+
+.g-panel-parchment .g-table tbody tr:nth-child(even) {
+  background: rgb(138 106 40 / 0.07);
+}
+
+.g-panel-parchment .g-table tbody tr:hover {
+  background: rgb(138 106 40 / 0.15);
+}
+
+.g-panel-parchment .g-table tfoot tr {
+  border-color: color-mix(in oklab, #8a6a28 40%, #ded3b4);
+}
+
+.g-panel-parchment .border-base-300 {
+  border-color: color-mix(in oklab, #8a6a28 32%, #ded3b4);
+}
+
+.g-panel-parchment .card-strip,
+.g-panel-parchment .g-panel {
+  color: var(--g-ink);
+}
+
+/* Highlighted slate panel (the "selected" state in a Genshin list). */
+.g-panel-gold {
+  border-color: color-mix(in oklab, var(--color-accent) 70%, transparent);
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--color-accent) 20%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-accent) 14%, var(--color-base-100)),
+      var(--color-base-100)
+    );
+}
+
+/* ---------------------------------------------------------------------------
+   Settings-style rows
+
+   The game's settings/options lists are translucent cream bars: label on the
+   left, value on the right, dark slate ink, over the blurred world. Used here
+   for the reward breakdown and the constellation readout, which is why those
+   are rows rather than tables.
+   --------------------------------------------------------------------------- */
+
+.g-rows {
+  position: relative;
+}
+
+/* Decorative column of gold diamonds behind the right-hand side of the list,
+   as on the graphics settings screen. */
+.g-rows::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 18%;
+  width: 2.5rem;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='44'><rect x='13.5' y='14.5' width='13' height='13' rx='1.5' transform='rotate(45 20 21)' fill='%23d3bc8e'/></svg>");
+  background-repeat: repeat-y;
+  background-position: center top;
+  background-size: 2.5rem 2.75rem;
+}
+
+.g-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-box);
+  border: 1px solid rgb(255 255 255 / 0.38);
+  color: #3a4157;
+  text-align: left;
+  background: linear-gradient(
+    180deg,
+    rgb(253 250 240 / 0.93),
+    rgb(231 222 198 / 0.88)
+  );
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 2px 10px rgb(8 14 26 / 0.28);
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+button.g-row {
+  cursor: pointer;
+}
+
+.g-row:hover {
+  background: linear-gradient(
+    180deg,
+    rgb(255 253 246 / 0.96),
+    rgb(240 233 214 / 0.9)
+  );
+}
+
+/* Selected row: brighter, with the soft glow the game puts behind the row you
+   are on. */
+.g-row--selected,
+.g-row--selected:hover {
+  background: linear-gradient(180deg, #fffdf7 0%, #f3ecda 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 20px rgb(255 231 170 / 0.4),
+    0 3px 14px rgb(8 14 26 / 0.34);
+}
+
+.g-row-label {
+  display: block;
+  font-weight: 600;
+}
+
+.g-row-sub {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.68;
+}
+
+.g-row-value {
+  margin-left: auto;
+  flex: none;
+  text-align: right;
+  font-weight: 700;
+}
+
+/* In light mode the rows are already on parchment, so they need an outline
+   rather than a glow to stay distinct. */
+[data-theme='genshin-light'] .g-row {
+  border-color: color-mix(in oklab, #8a6a28 26%, #ffffff);
+  background: linear-gradient(
+    180deg,
+    rgb(255 253 246 / 0.94),
+    rgb(240 232 211 / 0.9)
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Colour-coded summary cards (Stardust / Starglitter / extra wishes)
+   --------------------------------------------------------------------------- */
+
+.g-card-dust {
+  border-color: color-mix(in oklab, var(--g-hydro) 55%, transparent);
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--g-hydro) 26%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(180deg, var(--color-base-100), color-mix(in oklab, var(--g-hydro) 10%, var(--color-base-100)));
+}
+
+.g-card-glitter {
+  border-color: color-mix(in oklab, var(--g-electro) 55%, transparent);
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--g-electro) 26%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(180deg, var(--color-base-100), color-mix(in oklab, var(--g-electro) 10%, var(--color-base-100)));
+}
+
+.g-num-dust {
+  color: color-mix(in oklab, var(--g-hydro) 78%, white);
+}
+
+.g-num-glitter {
+  color: color-mix(in oklab, var(--g-electro) 72%, white);
+}
+
+/* On the light parchment the tinted numbers need inking down. */
+[data-theme='genshin-light'] .g-num-dust {
+  color: #1c7ea6;
+}
+
+[data-theme='genshin-light'] .g-num-glitter {
+  color: #7a4f9c;
+}
+
+/* ---------------------------------------------------------------------------
+   Buttons
+
+   Every Genshin action button is cream with dark slate text, so this is fixed
+   rather than themed. `.g-btn` is the standard action; `.g-btn-gold` is the
+   confirm action (brighter, gold-bordered); `.g-btn-ghost` is the dark
+   translucent one used for navigation.
+   --------------------------------------------------------------------------- */
+
+.g-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: var(--radius-field);
+  border: 1px solid color-mix(in oklab, var(--g-ink) 32%, transparent);
+  background: linear-gradient(180deg, var(--g-cream-hi), var(--g-cream-lo));
+  color: var(--g-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    0 2px 0 color-mix(in oklab, var(--g-ink) 26%, transparent),
+    0 5px 14px rgb(0 0 0 / 0.22);
+  transition: filter 0.12s ease, transform 0.08s ease;
+}
+
+.g-btn:hover {
+  filter: brightness(1.05);
+}
+
+.g-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 1px 0 color-mix(in oklab, var(--g-ink) 26%, transparent);
+}
+
+.g-btn-sm {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.g-btn-gold {
+  border-color: #b58e3c;
+  background: linear-gradient(180deg, #ffe9ab, #dcb35c);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 2px 0 #8f6c25,
+    0 6px 16px rgb(0 0 0 / 0.28);
+}
+
+/* Secondary: the dark translucent button with a gold border, used for
+   navigation and low-emphasis actions. */
+.g-btn-ghost {
+  background: color-mix(in oklab, var(--color-base-100) 70%, transparent);
+  color: var(--color-base-content);
+  border: 1px solid
+    color-mix(in oklab, var(--color-primary) 40%, var(--color-base-300));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
+}
+
+.g-btn-ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  filter: none;
+}
+
+.g-btn-danger {
+  border-color: color-mix(in oklab, var(--color-error) 60%, transparent);
+  /* Brightened, because it sits on a translucent panel that a light backdrop
+     can lift. */
+  color: color-mix(in oklab, var(--color-error) 68%, white);
+}
+
+/* In light mode the ghost button is cream at 70%, so a mid-toned red would sit
+   at roughly 2:1 on it. Ink it down instead. */
+[data-theme='genshin-light'] .g-btn-danger {
+  color: #8f2f2a;
+  border-color: color-mix(in oklab, #8f2f2a 55%, transparent);
+}
+
+.g-panel-parchment .g-btn-ghost {
+  background: rgb(255 253 245 / 0.7);
+  color: var(--g-ink);
+  border-color: var(--g-parchment-line);
+}
+
+.g-panel-parchment .g-btn-ghost:hover {
+  color: #7a5a12;
+  border-color: #a9822f;
+}
+
+/* Circular icon button, e.g. the day/night toggle. */
+.g-btn-icon {
+  width: 2.3rem;
+  height: 2.3rem;
+  padding: 0;
+  border-radius: 999px;
+}
+
+/* ---------------------------------------------------------------------------
+   Pill tabs inside a slate track -- active state is the cream fill, like the
+   character screen's section switcher.
+   --------------------------------------------------------------------------- */
+
+.g-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, black 30%, var(--g-well)),
+      color-mix(in oklab, black 14%, var(--g-well))
+    );
+  box-shadow: inset 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+/* Each tab carries a small diamond bullet, like the section list on the
+   settings screen; the active one is brighter and larger. */
+.g-tab::before {
+  content: '';
+  flex: none;
+  width: 0.33rem;
+  height: 0.33rem;
+  transform: rotate(45deg);
+  background: currentColor;
+  opacity: 0.5;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.g-tab.active::before {
+  opacity: 1;
+  transform: rotate(45deg) scale(1.2);
+}
+
+.g-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  /* An opaque blend rather than an alpha: fading the text with transparent
+     would let the mid-tone tab track wash it out. */
+  color: color-mix(in oklab, var(--color-base-content) 90%, var(--color-base-300));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.g-tab:hover {
+  color: var(--color-base-content);
+  background: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+}
+
+.g-tab.active {
+  background: linear-gradient(180deg, var(--g-cream-hi), var(--g-cream-lo));
+  border-color: color-mix(in oklab, var(--g-ink) 30%, transparent);
+  color: var(--g-ink);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 3px 10px rgb(0 0 0 / 0.3);
+}
+
+.g-tab-sm {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.72rem;
+  gap: 0.3rem;
+}
+
+.g-tab .g-tab-count {
+  border-radius: 999px;
+  padding: 0 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: color-mix(in oklab, var(--color-base-content) 18%, transparent);
+}
+
+.g-tab.active .g-tab-count {
+  background: color-mix(in oklab, var(--g-ink) 18%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Gold typography, dividers, ornaments
+   --------------------------------------------------------------------------- */
+
+.g-title {
+  color: var(--color-primary);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.g-diamond {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, var(--color-accent), var(--g-gold));
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 55%, transparent);
+}
+
+/* The parchment "equation" readout: cream chip with dark gold ink. */
+.g-equation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--g-parchment-line);
+  background: color-mix(in oklab, white 80%, var(--g-parchment-hi));
+  color: var(--g-ink);
+  box-shadow: inset 0 1px 0 #fffdf6;
+}
+
+.g-equation strong {
+  color: #8a6a28;
+}
+
+/* Gold rule flanking a section heading, with the diamond sitting in it. */
+.g-rule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-primary) 60%, transparent),
+    transparent
+  );
+}
+
+/* Big number with a soft glow, as on the character / stat screens. */
+.g-stat {
+  color: var(--color-accent);
+  text-shadow: 0 0 18px color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Element classes -- set --el for the cards and chips that use them
+   --------------------------------------------------------------------------- */
+
+.el-anemo {
+  --el: var(--g-anemo);
+}
+.el-geo {
+  --el: var(--g-geo);
+}
+.el-electro {
+  --el: var(--g-electro);
+}
+.el-dendro {
+  --el: var(--g-dendro);
+}
+.el-hydro {
+  --el: var(--g-hydro);
+}
+.el-pyro {
+  --el: var(--g-pyro);
+}
+.el-cryo {
+  --el: var(--g-cryo);
+}
+
+/* Element symbol inside a chip. */
+.g-chip-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgb(0 0 0 / 0.55));
+}
+
+/* Element pill, e.g. "PYRO" on a character card. */
+.g-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.08rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--el) 60%, transparent);
+  background: color-mix(in oklab, var(--el) 24%, rgb(10 12 20 / 0.6));
+  color: color-mix(in oklab, var(--el) 42%, white);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
+   Character cards -- modelled on the inventory sheet: saturated quality
+   gradient, an element-kissed portrait, a parchment name strip, then the
+   constellation diamonds.
+   --------------------------------------------------------------------------- */
+
+.rarity-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-box);
+  border: 1px solid color-mix(in oklab, var(--g-gold) 45%, transparent);
+  background: linear-gradient(168deg, var(--rar-top), var(--rar-bot));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 6px 18px rgb(0 0 0 / 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.rarity-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 10px 24px rgb(0 0 0 / 0.4);
+}
+
+.rarity-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    95% 65% at 50% 0%,
+    color-mix(in oklab, var(--el) 60%, transparent),
+    transparent 72%
+  );
+  opacity: 0.6;
+}
+
+/* The element glow is absolutely positioned, so it would otherwise paint over
+   the (non-positioned) card content. */
+.rarity-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The quality colour stays dominant, but each card leans toward its own
+   element, so a grid of 4★s is not one flat block of purple. */
+.rarity-4 {
+  --rar-top: color-mix(in oklab, var(--g-r4) 78%, var(--el, var(--g-r4)));
+  --rar-bot: color-mix(in oklab, var(--g-r4b) 74%, var(--el, var(--g-r4b)));
+}
+
+.rarity-5 {
+  --rar-top: color-mix(in oklab, var(--g-r5) 80%, var(--el, var(--g-r5)));
+  --rar-bot: color-mix(in oklab, var(--g-r5b) 76%, var(--el, var(--g-r5b)));
+}
+
+.rarity-card.is-unowned {
+  filter: grayscale(0.72) brightness(0.7);
+}
+
+/* Element-tinted strip the constellation nodes sit on, so each card carries
+   its element colour as well as its quality colour. */
+.card-nodes {
+  background: linear-gradient(
+    180deg,
+    rgb(12 14 22 / 0.16),
+    color-mix(in oklab, var(--el) 30%, rgb(10 12 20 / 0.62))
+  );
+}
+
+/* Parchment strip carrying the character's name, rarity and payout. */
+.card-strip {
+  background: linear-gradient(180deg, #fdf8ea, #e2d7bb);
+  color: #3a4157;
+  border-top: 1px solid color-mix(in oklab, var(--g-gold) 55%, transparent);
+}
+
+.glitter-badge {
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border: 1px solid #a9822f;
+  background: linear-gradient(180deg, #ffe9ab, #dcb35c);
+  color: #4a370f;
+}
+
+.glitter-badge.is-none {
+  border-color: #b3ab99;
+  background: linear-gradient(180deg, #efe9da, #d8d0bd);
+  color: #6b6455;
+}
+
+/* Genshin's item-quality star pips. */
+.g-stars {
+  color: #ffeda8;
+  letter-spacing: 0.1em;
+  font-size: 0.6rem;
+  line-height: 1;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.85),
+    0 0 6px rgb(0 0 0 / 0.5);
+}
+
+/* ---------------------------------------------------------------------------
+   Constellation nodes -- diamonds with an upright label, mirroring the
+   constellation screen.
+   --------------------------------------------------------------------------- */
+
+/* The diamond is drawn with clip-path rather than a rotated box: rotating a
+   square makes its bounding box 1.41x wider than its container, so the nodes
+   would overlap. A clipped box fits exactly, and layering a slightly smaller
+   clipped ::after gives a clean 1px diamond outline. */
+.g-node {
+  position: relative;
+  width: 1.55rem;
+  height: 1.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  --node-outline: color-mix(in oklab, #f2e4bd 42%, #6a6f86);
+  --node-fill: color-mix(in oklab, #1d2436 82%, transparent);
+}
+
+.g-node-shape {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: var(--node-outline);
+  transition: background 0.12s ease;
+}
+
+.g-node-shape::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: var(--node-fill);
+}
+
+.g-node-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: color-mix(in oklab, #fbf4e2 82%, transparent);
+}
+
+.g-node:hover {
+  --node-outline: var(--color-accent);
+}
+
+.g-node.active {
+  --node-outline: #ffe9a8;
+  --node-fill: linear-gradient(135deg, #ffeeb8, #d3a94e);
+}
+
+.g-node.active .g-node-shape {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-accent) 70%, transparent));
+}
+
+.g-node.active .g-node-label {
+  color: #3a2f14;
+}
+
+.g-node.unowned {
+  --node-fill: color-mix(in oklab, #1d2436 40%, transparent);
+}
+
+.g-node.unowned .g-node-label {
+  color: color-mix(in oklab, #fbf4e2 55%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Tables -- gold column headings, hairline gold separators, warm zebra rows
+   --------------------------------------------------------------------------- */
+
+.g-table th {
+  color: var(--color-primary);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.g-table td {
+  border-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-base-300));
+}
+
+.g-table tbody tr:nth-child(even) {
+  background: color-mix(in oklab, var(--color-primary) 6%, transparent);
+}
+
+.g-table tbody tr:hover {
+  background: color-mix(in oklab, var(--color-primary) 13%, transparent);
+}
+
+/* Genshin's progress bars: a dark track with a warm gold fill. */
+/* DaisyUI's .range is appearance:none, so `accent-color` does literally
+   nothing here -- the track, fill and knob are all custom properties. Left at
+   its defaults the slider renders as a near-white bar with a panel-coloured
+   knob, which is why it looked like a stock widget dropped into the theme.
+
+   The fill is drawn as a shadow on the thumb in the thumb's own colour, so
+   --range-progress controls both the knob's ring and the filled track.
+   Scoped under .g-slider so these win over DaisyUI's own .range rule rather
+   than depending on source order. */
+.g-slider {
+  /* The thumb size lives here and nowhere else: the knob, the slider's own
+     height and the tick-label positions all derive from it. */
+  --g-thumb: 1.4rem;
+}
+
+.g-slider .g-range {
+  --range-thumb-size: var(--g-thumb);
+  --range-thumb: #fff6e2;
+  --range-progress: var(--color-accent);
+  --range-bg: color-mix(in oklab, var(--color-accent) 24%, transparent);
+  --range-p: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Info popover
+   --------------------------------------------------------------------------- */
+
+.info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 0.3rem;
+  outline: none;
+}
+
+.info-icon {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  cursor: help;
+}
+
+.info-wrap:hover .info-icon,
+.info-wrap:focus .info-icon {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.info-popup {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(22rem, 78vw);
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-box);
+  background: var(--color-base-100);
+  border: 1px solid
+    color-mix(in oklab, var(--color-primary) 45%, var(--color-base-300));
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+  color: var(--color-base-content);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+  z-index: 60;
+}
+
+.info-wrap:hover .info-popup,
+.info-wrap:focus .info-popup {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---------------------------------------------------------------------------
+   Slider tick labels, portraits
+   --------------------------------------------------------------------------- */
+
+/* A constellation landmark under the slider. The position is computed from the
+   same --g-thumb the knob uses, so the label cannot drift away from the thumb
+   if the knob is ever resized. */
+.g-slider .tick-marker {
+  position: absolute;
+  top: 1.7rem;
+  left: calc(var(--g-thumb) / 2 + (100% - var(--g-thumb)) * var(--t, 0));
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in oklab, var(--color-base-content) 74%, transparent);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* A short gold hairline tying each label to its position on the track. */
+.g-slider .tick-marker::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.5rem;
+  width: 1px;
+  height: 0.32rem;
+  background: var(--g-hairline);
+}
+
+/* Circular portrait with an element-coloured ring and glow. */
+.roster-icon {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  object-fit: cover;
+  background: color-mix(in oklab, var(--el, var(--color-base-300)) 35%, #1b2030);
+  border: 2px solid color-mix(in oklab, var(--el, #ffffff) 85%, white);
+  box-shadow:
+    0 0 0 2px rgb(12 15 24 / 0.55),
+    0 0 14px color-mix(in oklab, var(--el, #ffffff) 55%, transparent);
+}
+
+.roster-icon-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #fbf4e2;
+}
+
+/* DaisyUI form controls get a Genshin treatment: recessed well, gold focus. */
+.input,
+.select {
+  border-color: color-mix(in oklab, var(--color-primary) 32%, var(--color-base-300));
+  background: color-mix(in oklab, black 24%, var(--color-base-100));
+}
+
+[data-theme='genshin-light'] .input,
+[data-theme='genshin-light'] .select {
+  background: #fffdf6;
+}
+
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within {
+  border-color: var(--color-primary);
+  outline: 2px solid color-mix(in oklab, var(--color-primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.recharts-cartesian-axis-tick text {
+  fill: var(--chart-axis);
+}
+
+/* ---------------------------------------------------------------------------
+   Explanation page
+   --------------------------------------------------------------------------- */
+
+@layer components {
+  .explanation {
+    @apply flex flex-col gap-6 leading-relaxed;
+  }
+
+  .explanation section {
+    @apply flex flex-col gap-3;
+  }
+
+  .explanation h2 {
+    @apply text-xl font-bold text-primary;
+  }
+
+  .explanation h3 {
+    @apply text-base font-semibold text-primary;
+  }
+
+  .explanation p,
+  .explanation ul {
+    @apply opacity-80;
+  }
+
+  .explanation ul {
+    @apply flex list-disc flex-col gap-1 pl-5;
+  }
+
+  .explanation code {
+    @apply rounded bg-base-200 px-1.5 py-0.5 text-[0.85em] text-accent;
+  }
+
+  /* The accent gold is tuned for the dark chrome; on the parchment it lands at
+     2.7:1. This is the same deep bronze the parchment stats use. */
+  [data-theme='genshin-light'] .explanation code,
+  [data-theme='genshin-light'] .model-card-q {
+    color: #6b4710;
+  }
+
+  .caption {
+    @apply text-xs opacity-60;
+  }
+
+  .toggle-row {
+    @apply flex items-center gap-2 text-sm;
+  }
+
+  .toggle-row input {
+    accent-color: var(--color-primary);
+  }
+
+  .warning-box {
+    @apply rounded-box border-l-4 border-warning bg-warning/10 p-4 text-sm;
+  }
+
+  .model-card {
+    @apply flex flex-col gap-2 rounded-box border border-base-300 bg-base-100 p-4;
+  }
+
+  .model-card.active {
+    @apply border-primary bg-primary/10;
+  }
+
+  .model-card-title {
+    @apply text-sm font-semibold;
+  }
+
+  .model-card-q {
+    @apply text-xs tabular-nums text-accent;
+  }
+
+  .model-card-body {
+    @apply text-xs leading-relaxed opacity-75;
+  }
+
+  .results-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .results-table th {
+    @apply border-b border-base-300 px-3 py-2 text-left align-bottom text-[0.7rem] font-semibold uppercase tracking-wide text-primary;
+  }
+
+  .results-table td {
+    @apply border-b border-base-200 px-3 py-1.5 tabular-nums;
+  }
+
+  .results-table .dim {
+    @apply opacity-50;
+  }
+
+  .cr-bar {
+    @apply flex h-7 w-full overflow-hidden rounded-field border border-base-300 text-[0.7rem] font-semibold;
+  }
+
+  .cr-bar-seg {
+    @apply flex items-center justify-center overflow-hidden whitespace-nowrap;
+  }
+
+  .cr-bar-natwin {
+    @apply bg-success text-success-content;
+  }
+
+  .cr-bar-crwin {
+    @apply bg-primary text-primary-content;
+  }
+
+  .cr-bar-loss {
+    @apply bg-error text-error-content;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Light mode: the same rule the game follows, applied globally -- DARK ink on
+   any cream surface, BRIGHT gold on the dark backdrop. The light theme's
+   `--color-primary` is a deep bronze (right for cream, poor on the dark world
+   backdrop), so the place an element sits decides which one it gets.
+   --------------------------------------------------------------------------- */
+
+/* The backdrop is the dark scrimmed landscape in BOTH themes (it is a blurred
+   screenshot of the world either way), so anything sitting directly on it needs
+   light ink, while every cream surface keeps dark slate ink. Doing this in one
+   place beats chasing each element. */
+[data-theme='genshin-light'] body {
+  color: #f0e8d9;
+}
+
+[data-theme='genshin-light'] .g-panel,
+[data-theme='genshin-light'] .g-panel-parchment,
+[data-theme='genshin-light'] .g-head-bar,
+[data-theme='genshin-light'] .g-row,
+[data-theme='genshin-light'] .g-well,
+[data-theme='genshin-light'] .model-card {
+  color: #3a4157;
+}
+
+/* On the backdrop: bright gold, as in the dark theme. The explanation
+   headings used to be in this group -- they sat straight on the landscape.
+   Now that every section is a panel they sit on cream, where bright gold is
+   1.2:1 and effectively invisible, so they get the on-surface ink below. */
+[data-theme='genshin-light'] .g-title,
+[data-theme='genshin-light'] .text-primary {
+  color: #e6cd93;
+}
+
+/* On a cream surface: dark slate ink. */
+[data-theme='genshin-light'] .g-panel .g-title,
+[data-theme='genshin-light'] .g-panel .text-primary,
+[data-theme='genshin-light'] .g-panel-parchment .g-title,
+[data-theme='genshin-light'] .g-panel-parchment .text-primary,
+[data-theme='genshin-light'] .g-head-bar .g-title,
+[data-theme='genshin-light'] .g-row .text-primary,
+[data-theme='genshin-light'] .explanation .g-panel .g-title,
+[data-theme='genshin-light'] .explanation h2,
+[data-theme='genshin-light'] .explanation h3 {
+  color: #3a4157;
+}
+
+/* Table headings and the danger label sit on cream in light mode. */
+[data-theme='genshin-light'] .g-table th,
+[data-theme='genshin-light'] .results-table th {
+  color: #3a4157;
+}
+
+[data-theme='genshin-light'] .g-btn-danger {
+  color: #7d2724;
+}
+
+/* ---------------------------------------------------------------------------
+   Last, because these two need to win ties:
+
+   In light mode the tab track is a light recess, so the dark ink on it reads.
+   On the chrome the track must stay dark in BOTH themes, because those tabs
+   are always light. Both selectors have the same specificity as the base ones,
+   so source order is what settles it.
+   --------------------------------------------------------------------------- */
+
+[data-theme='genshin-light'] .g-tabs {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, black 9%, var(--g-well)),
+    color-mix(in oklab, black 2%, var(--g-well))
+  );
+}
+
+/* Opaque rather than alpha'd, so the chrome lifting over a bright patch of the
+   landscape cannot wash the labels out. :not(.active) so the cream-filled
+   active pill keeps its dark ink. */
+.g-hero .g-tab:not(.active) {
+  color: #ded7c8;
+}
+
+.g-hero .g-tabs {
+  border-color: rgb(255 255 255 / 0.14);
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.2));
 }
