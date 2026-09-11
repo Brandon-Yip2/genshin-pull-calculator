@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { fiveStarRate, MAX_PITY, MAX_COPIES, CR_MODELS } from './probability.js';
+import { fiveStarRate, MAX_PITY, MAX_COPIES, CR_MODEL } from './probability.js';
 import { formatProb, hardGuaranteeWishForCopies } from './format.js';
 
 // Generic non-hard formatter for tooltips on the per-pull / per-wish-mass
@@ -20,15 +20,22 @@ function pctFmt(v) {
   return formatProb(v, false);
 }
 
-const CONST_COLORS = [
-  '#4f9cff', // C0
-  '#7bc36b', // C1
-  '#f0c419', // C2
-  '#ec8c4b', // C3
-  '#e25c5c', // C4
-  '#b266d9', // C5
-  '#5c5cd6', // C6
-];
+// Two palettes, not one. No single 7-colour ramp clears the 3:1 that WCAG asks
+// of graphical objects against BOTH a slate panel (#2b3240..#414c58) and a
+// cream one (#f6f1e2..#dcddd0) -- the luminance bands that pass on cream (dark
+// ink) and on slate (light ink) do not overlap, so the old single palette was
+// failing one theme or the other whichever way it was tuned. These are chosen
+// vivid rather than merely legal, and verified against both shades of their own
+// panel: worst case 3.09:1 (dark C4) and 3.18:1 (light C1).
+const PALETTES = {
+  dark: ['#5aa9f5', '#5ecf8b', '#f2d24b', '#f59a52', '#f4716a', '#c98ef5', '#9d9dfa'],
+  light: ['#1f6fc4', '#1d8a52', '#8a6a12', '#b45a17', '#bf3a35', '#7a3fb5', '#4a45c9'],
+};
+
+// Recharts paints each legend label in its series colour, which is fine for the
+// swatch but not for 16px type -- the darker hues land near 1.8:1 on a slate
+// panel. The swatch keeps its colour; the label gets the theme's ink.
+const legendLabel = (value) => <span style={{ color: 'var(--text)' }}>{value}</span>;
 
 function PerPullRateChart() {
   const data = useMemo(() => {
@@ -65,7 +72,7 @@ function PerPullRateChart() {
           dot={false}
           strokeWidth={2}
         />
-        <ReferenceLine x={76} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
+        <ReferenceLine x={74} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
         <ReferenceLine x={90} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'hard pity', fill: 'var(--danger)', position: 'top', offset: 12 }} />
       </LineChart>
     </ResponsiveContainer>
@@ -145,7 +152,7 @@ function FirstFiveStarCumulativeChart({ curves }) {
           dot={false}
           strokeWidth={2}
         />
-        <ReferenceLine x={76} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
+        <ReferenceLine x={74} stroke="var(--accent)" strokeDasharray="4 4" label={{ value: 'soft pity', fill: 'var(--accent)', position: 'top', offset: 12 }} />
         <ReferenceLine x={90} stroke="var(--danger)" strokeDasharray="4 4" label={{ value: 'hard pity', fill: 'var(--danger)', position: 'top', offset: 12 }} />
       </LineChart>
     </ResponsiveContainer>
@@ -232,7 +239,7 @@ function PromoCumulativeChart({ curves }) {
   );
 }
 
-function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
+function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR, colors }) {
   const data = useMemo(() => {
     const rows = [];
     for (let n = 0; n <= maxWishes; n += 10) {
@@ -272,14 +279,14 @@ function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
           }}
           labelFormatter={(n) => `${n} wishes`}
         />
-        <Legend wrapperStyle={{ color: 'var(--text)' }} />
+        <Legend wrapperStyle={{ color: 'var(--text)' }} formatter={legendLabel} />
         {[0, 1, 2, 3, 4, 5, 6].map((c) => (
           <Line
             key={c}
             type="monotone"
             dataKey={'C' + c}
             name={'C' + c}
-            stroke={CONST_COLORS[c]}
+            stroke={colors[c]}
             dot={false}
             strokeWidth={2}
           />
@@ -290,7 +297,7 @@ function ConstellationCurvesChart({ curves, curvesNoCR, maxWishes, showNoCR }) {
             type="monotone"
             dataKey={'C' + c + '_noCR'}
             name={'C' + c + ' (pre-5.0)'}
-            stroke={CONST_COLORS[c]}
+            stroke={colors[c]}
             dot={false}
             strokeWidth={1.5}
             strokeDasharray="5 5"
@@ -376,49 +383,16 @@ function ModelBreakdownBar({ q }) {
   );
 }
 
-function ModelComparisonChart({ curvesByModel, maxWishes }) {
-  const data = useMemo(() => {
-    const rows = [];
-    const ids = Object.keys(curvesByModel);
-    for (let n = 0; n <= maxWishes; n += 10) {
-      const row = { wish: n };
-      for (const id of ids) {
-        // Show C2+ as the most CR-sensitive cumulative curve (CR doesn't
-        // affect C0; barely affects C1; most visible in the middle range).
-        row[id] = curvesByModel[id].atLeast[3][n];
-      }
-      rows.push(row);
-    }
-    return rows;
-  }, [curvesByModel, maxWishes]);
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-        <XAxis dataKey="wish" stroke="var(--chart-axis)" />
-        <YAxis
-          stroke="var(--chart-axis)"
-          tickFormatter={(v) => (v * 100).toFixed(0) + '%'}
-          domain={[0, 1]}
-        />
-        <Tooltip
-          contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
-          formatter={(v) => formatProb(v, false)}
-          labelFormatter={(n) => `${n} wishes`}
-        />
-        <Legend wrapperStyle={{ color: 'var(--text)' }} />
-        <Line type="monotone" dataKey="official" name="Conservative (q₂≈9%)" stroke="var(--chart-line-1)" dot={false} strokeWidth={2} />
-        <Line type="monotone" dataKey="community" name="Optimistic (q₂=50%)" stroke="var(--accent)" dot={false} strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-}
-
-export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWishes, crModel }) {
+export default function Explanation({ curves, curvesNoCR, maxWishes, theme }) {
   const [showNoCR, setShowNoCR] = useState(false);
+  const colors = PALETTES[theme === 'light' ? 'light' : 'dark'];
+  // Every section is a panel. Prose and chart axes sitting straight on the
+  // blurred landscape were the one genuinely hard-to-read part of the app:
+  // the Recharts grid and tick labels are semi-transparent greys with nothing
+  // behind them, so they vanished into the world.
   return (
     <div className="explanation">
-      <section>
+      <section className="g-panel p-5">
         <h2>Reading the calculator</h2>
         <p>
           The big number is <em>P(reach Cn or higher)</em> — the cumulative
@@ -429,9 +403,18 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         <p>
           For "exactly Cn", subtract: P(exactly C2) = P(C2+) − P(C3+).
         </p>
+        <p>
+          The calculator's own number starts from <em>your</em> banner state —
+          the 5★ pity, guarantee, and Capturing Radiance counter you enter in
+          the <strong>Advanced</strong> panel of the Stardust & Starglitter
+          section — and credits the expected Starglitter refund as extra
+          wishes. The charts on this page deliberately show a{' '}
+          <strong>fresh banner</strong> instead, so the underlying mechanic is
+          easier to read.
+        </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>The base wish system</h2>
         <p>Three official numbers define everything:</p>
         <ul>
@@ -441,27 +424,32 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         </ul>
         <p>
           The curve between the base rate and the hard pity wall — "soft pity" —
-          is <em>not</em> officially published. The community has reverse-engineered
-          it from large datasets. We use a model fitted to a 1B+ pull dataset
-          (the spreadsheet you may have seen): the per-pull rate stays at 0.6%
-          through pity 75, then jumps sharply at pity 76 and ramps to 100% at
-          pity 90.
+          is <em>not</em> officially published. The community has
+          reverse-engineered it from large pull datasets; the standard model
+          comes from a 9.45M-wish sample on bilibili and is the one the wiki
+          cites. It says the per-pull rate stays at <strong>0.6%</strong> through
+          pity 73, then rises by <strong>+6 percentage points per pull</strong>:
+          6.6% at 74, 18.6% at 76, 42.6% at 80, 96.6% at 89, and 100% at 90.
+        </p>
+        <p>
+          That curve averages out to the official 1.6% consolidated rate
+          exactly: the mean wait for a 5★ is 62.3 pulls (1 / 62.3 = 1.605%).
         </p>
         <PerPullRateChart />
         <p className="caption">
-          Per-pull P(5★) as a function of pity counter. Note the sharp step at
-          pity 76 — that's where most 5★s land.
+          Per-pull P(5★) as a function of pity counter. The knee is at pity 74,
+          and the rate is already nearly certain by pity 89.
         </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>Distribution of "wishes to first 5★"</h2>
         <p>
           Even though the per-pull rate climbs smoothly, the <em>distribution</em>{' '}
-          of when your 5★ actually arrives looks bumpy. Most pulls before pity 76
-          have only a 0.6% chance, so the early region is a slow-growing bump.
-          Then the soft pity step at 76 dumps a huge mass of probability into a
-          narrow window.
+          of when your 5★ actually arrives looks bumpy. Pulls before pity 74
+          have only a 0.6% chance, so the early region is a slow-growing bump —
+          about <strong>35.5%</strong> of all 5★s arrive before soft pity. Then
+          the ramp dumps a huge mass of probability into the pity 74–80 window.
         </p>
         <FirstFiveStarChart curves={curves} maxWishes={maxWishes} />
         <p className="caption">
@@ -473,12 +461,12 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         </p>
         <FirstFiveStarCumulativeChart curves={curves} />
         <p className="caption">
-          The curve is essentially flat through pity 75, then climbs fast once
-          soft pity kicks in, hitting 100% at the hard pity wall (wish 90).
+          The curve is essentially flat through pity 73, then climbs fast once
+          soft pity kicks in at 74, hitting 100% at the hard pity wall (wish 90).
         </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>The 50/50 and the guarantee</h2>
         <p>
           On the limited banner, when you win a 5★ it's a coin flip: 50% chance
@@ -489,14 +477,18 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>Capturing Radiance (post-5.0)</h2>
         <p>
-          Capturing Radiance ("CR") is a counter, 0–3, that tracks how many
-          50/50s you've recently lost. It can override a loss into a win, but
-          only when the counter is high enough. By default the counter starts
-          at 1 (per the post-5.0 baseline diagram from CN community
-          analysis).
+          Capturing Radiance ("CR") can rescue a lost 50/50 and hand you the
+          promotional character instead. HoYoverse publishes only two facts
+          about it: the base chance of triggering is <strong>0.018% per
+          wish</strong>, and if the promotional 5★ has been the second 5★
+          obtained on three consecutive occasions, the next one is guaranteed
+          to trigger it. Everything else — including the counter described
+          below — is a community model reverse-engineered to reproduce the
+          announced “55% consolidated” figure. The counter starts at 1 by
+          default.
         </p>
         <p><strong>Counter transitions</strong> (only when a 50/50 actually fires — guaranteed wins from a prior loss don't change the counter):</p>
         <ul>
@@ -513,74 +505,51 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
           into the 50% loss territory by q₂ × 50%.
         </p>
 
-        <h3 style={{ marginTop: '1rem' }}>The q₂ debate — two competing estimates</h3>
+        <h3 style={{ marginTop: '1rem' }}>What q₂ has to be</h3>
         <p>
           The rescue probability at counter 2 (q₂) is{' '}
-          <strong>not officially published</strong>. Two main community
-          estimates exist, and the calculator lets you switch between them.
-          They produce nearly identical results for low/mid wish counts and
-          diverge only modestly at higher constellations.
+          <strong>not officially published</strong>, so it has to be inferred
+          from something that <em>is</em>: the consolidated 55% in the wish
+          details. Exactly one value does that —{' '}
+          <strong>q₂ = 1/11 ≈ 9.09%</strong>.
         </p>
 
-        <div className="model-card-row">
-          <div className={'model-card' + (crModel === 'official' ? ' active' : '')}>
-            <div className="model-card-title">{CR_MODELS.official.label}</div>
-            <div className="model-card-q">q₂ = 1/11 ≈ 9.09%</div>
-            <ModelBreakdownBar q={CR_MODELS.official.q[2]} />
-            <p className="model-card-body">
-              Back-solved from HoYoverse's announced "55% consolidated promo
-              rate." Assumes the published number is exact in steady state.
-              Mathematically clean and conservative; matches the official
-              1.103% per-pull promo rate.
-            </p>
-          </div>
-          <div className={'model-card' + (crModel === 'community' ? ' active' : '')}>
-            <div className="model-card-title">{CR_MODELS.community.label}</div>
-            <div className="model-card-q">q₂ = 50%</div>
-            <ModelBreakdownBar q={CR_MODELS.community.q[2]} />
-            <p className="model-card-body">
-              Captures the heuristic "the third 50/50 ends up 75/25 in your
-              favor" — 50% natural win + 25% CR rescue = 75% total. Steady-
-              state promo rate ~57%, slightly above the announced 55%. Some
-              community analysts believe HoYoverse's rates run a touch low
-              (HSR's "50/50" appears closer to 56/44 empirically).
-            </p>
-          </div>
+        <div className="model-card active">
+          <div className="model-card-title">{CR_MODEL.label}</div>
+          <div className="model-card-q">{CR_MODEL.short}</div>
+          <ModelBreakdownBar q={CR_MODEL.q[2]} />
+          <p className="model-card-body">{CR_MODEL.summary}</p>
         </div>
 
         <p style={{ marginTop: '1rem' }}>
-          The two models give the same answer for C0 and very nearly the same
-          for C1, but the gap widens for C2+. Here's P(reach C2+) under each
-          model — the gap shows where CR's value most affects your real
-          wishes:
-        </p>
-        <ModelComparisonChart curvesByModel={curvesByModel} maxWishes={maxWishes} />
-        <p className="caption">
-          The Calculator currently uses the <strong>{CR_MODELS[crModel].label}</strong>{' '}
-          model ({CR_MODELS[crModel].short}). Switch in the "Advanced:
-          Capturing Radiance model" section at the bottom of the Calculator
-          tab.
+          A second figure circulates — the &ldquo;75/25&rdquo; heuristic, which
+          assumes CR rescues fully half of all lost 50/50s at counter 2. It is
+          not used here because it misses the published number: averaging it
+          over the counter distribution gives a <strong>57.1%</strong> win rate
+          for a non-guaranteed 5★, roughly two points above the official 55.000%.
+          That would quietly overstate your odds, so the calculator ships the
+          back-solved value only rather than asking you to pick between two
+          near-identical guesses.
         </p>
 
         <h3 style={{ marginTop: '1.5rem' }}>What CR means for getting C0 (and other constellations)</h3>
         <p>
-          <strong>For C0:</strong> CR has no effect, in either model. The C0
-          path involves at most one 50/50 (at the starting counter, 0 or 1).
-          Both models have q = 0 at counters 0 and 1, so CR can't trigger.
-          Whether you win that 50/50 directly or lose and take the next 5★
-          via the regular post-loss guarantee, you arrive at C0 the same way
-          you would under the pre-5.0 system.
+          <strong>For C0:</strong> CR has no effect. The C0 path involves at
+          most one 50/50 (at the starting counter, 0 or 1), and q = 0 at both,
+          so CR cannot trigger. Whether you win that 50/50 directly or lose and
+          take the next 5★ via the regular post-loss guarantee, you arrive at
+          C0 the same way you would under the pre-5.0 system.
         </p>
         <p>
-          <strong>For C1+:</strong> CR starts to matter. As you pull more,
-          the counter can climb to 2 (where q₂ matters) or 3 (forced CR win).
-          The two models disagree on how much CR helps in the q₂=2 region —
-          which is exactly the region most "going for higher constellations"
-          paths spend their time in.
+          <strong>For C1+:</strong> CR starts to matter. As you pull more, the
+          counter can climb to 2 (where q₂ applies) or 3 (forced CR win). That
+          counter-2 region is exactly where the &ldquo;going for higher
+          constellations&rdquo; paths spend their time, which is why the C2+
+          curves are the ones that move most.
         </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>Distribution of "wishes to first promo (C0)"</h2>
         <p>
           The first-promo distribution is the same shape as first 5★, but
@@ -601,7 +570,7 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         </p>
       </section>
 
-      <section>
+      <section className="g-panel p-5">
         <h2>P(reach Cn) curves</h2>
         <p>
           Putting it all together — here's the cumulative probability of
@@ -632,6 +601,7 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
           curvesNoCR={showNoCR ? curvesNoCR : null}
           maxWishes={maxWishes}
           showNoCR={showNoCR}
+          colors={colors}
         />
         <p className="caption">
           Each curve shifts right and flattens. Going from C5 to C6 takes
@@ -646,8 +616,8 @@ export default function Explanation({ curves, curvesByModel, curvesNoCR, maxWish
         <CRImpactTable curves={curves} curvesNoCR={curvesNoCR} />
         <p className="caption">
           CR shaves 1–10+ wishes off the typical thresholds and grows in
-          absolute size for higher constellations. The pre-5.0 numbers are
-          what 1B-pull simulations from before patch 5.0 still report.
+          absolute size for higher constellations. The “no CR” line is the
+          pre-5.0 behaviour: a 50/50 with no rescue at all.
         </p>
       </section>
     </div>
