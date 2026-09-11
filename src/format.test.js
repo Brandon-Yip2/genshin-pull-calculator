@@ -14,6 +14,22 @@ describe('hardGuaranteeWishForCopies', () => {
     expect(hardGuaranteeWishForCopies(6)).toBe(900);  // C5
     expect(hardGuaranteeWishForCopies(7)).toBe(1080); // C6
   });
+
+  it('shrinks when you already carry pity, a guarantee, or a counter', () => {
+    // Everything below is strictly better than a fresh banner: you need fewer
+    // pulls to be certain of the same constellation.
+    expect(hardGuaranteeWishForCopies(1, { startingFivePity: 60 })).toBe(120);
+    expect(hardGuaranteeWishForCopies(1, { guaranteed: true })).toBe(90);
+    expect(hardGuaranteeWishForCopies(1, { crCounter: 3 })).toBe(90);
+    expect(hardGuaranteeWishForCopies(7, { startingFivePity: 89 })).toBe(991);
+    // It is monotone in the constellation either way.
+    let prev = 0;
+    for (let k = 1; k <= 7; k++) {
+      const v = hardGuaranteeWishForCopies(k, { startingFivePity: 30 });
+      expect(v).toBeGreaterThan(prev);
+      prev = v;
+    }
+  });
 });
 
 describe('formatProb', () => {

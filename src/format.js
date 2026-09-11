@@ -1,9 +1,11 @@
+import { worstCasePullsForCopies } from './probability.js';
+
 // Probability formatter that NEVER shows "100.00%" unless we're at a true
 // hard guarantee. The math can give 0.9999999999999992 from floating point
 // or genuinely close-to-1 values that should not be misrepresented as
 // certainty.
 //
-// Hard guarantee thresholds (assuming default starting CR counter = 1):
+// Hard guarantee thresholds (default state: fresh banner, CR counter = 1):
 //   - P(any 5★) is exactly 1 at wish 90 (hard pity).
 //   - P(reach k copies) is exactly 1 at the hardest possible path through
 //     the Capturing Radiance chain. From counter=1, the maximum-pulls path
@@ -20,12 +22,19 @@
 // Without CR, this would naively be n*180; CR caps consecutive losses at 2
 // (from c=1) before forcing a W, which costs only 90 instead of 180,
 // shortening the worst case for C2 and beyond.
-
-export function hardGuaranteeWishForCopies(copies) {
+//
+// If you pass the banner state you are really on, the threshold shrinks:
+// `startingFivePity` is credited to the first 5★, an existing guarantee makes
+// the first 5★ a free promo, and a higher CR counter caps the losses the
+// adversary can string together. `probability.js` solves that exactly (see
+// worstCasePullsForCopies) instead of using the closed form above.
+export function hardGuaranteeWishForCopies(copies, startState = {}) {
   if (copies <= 0) return 0;
-  const fullMacros = Math.floor(copies / 3);
-  const leftover = copies % 3;
-  return fullMacros * 450 + leftover * 180;
+  return worstCasePullsForCopies(copies, {
+    startingPity: startState.startingFivePity ?? 0,
+    crCounter: startState.crCounter ?? 1,
+    guaranteed: Boolean(startState.guaranteed),
+  });
 }
 
 // `hard` = caller has determined the displayed value represents a true hard
