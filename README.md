@@ -300,6 +300,16 @@ solver against an exhaustive forward search in seven counter/guarantee states.
 - The 4★ identity model assumes the standard pool is uniformly distributed
   within the character/weapon halves, and that the featured three are equally
   likely.
+- The wiki's 4★ curve (5.1% through wish 8, 56.1% at 9, 100% at 10) makes the
+  4★ counter fire on **13.07%** of wishes. Because a 5★ on the same wish
+  displaces the 4★ item, the app's actual 4★ *item* rate lands at **12.86%**
+  per wish, against the 13.00% HoYoverse prints, and the 3★ rate comes out at
+  85.5% rather than the published 85.4%. The gap is about 1% relative and
+  carries proportionally into Stardust. The counter shape is kept exactly as
+  the wiki publishes it rather than tuned to close the gap, since that curve is
+  the published estimate and the official 13.00% was not constructed from it.
+- Whether a 5★ *freezes* the 4★ counter or *advances* it is immaterial either
+  way: measured across 8M pulls the two readings differ by 0.007%.
 - A long run of duplicates would push characters toward C6 mid-run (raising
   later payouts). The model uses your *current* constellations as a fixed
   snapshot, so it is slightly conservative at very high wish counts.
