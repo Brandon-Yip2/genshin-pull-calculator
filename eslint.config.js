@@ -14,8 +14,18 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        // Injected by Vite's `define` at build time (see vite.config.js).
+        __BUILD_INFO__: 'readonly',
+      },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+  },
+  {
+    // Build config runs in Node, so it needs `process` and friends rather than
+    // the browser globals above.
+    files: ['vite.config.js', '*.config.js'],
+    languageOptions: { globals: globals.node },
   },
 ])

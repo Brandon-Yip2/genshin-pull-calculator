@@ -6,6 +6,7 @@ import Calculator from './Calculator.jsx';
 import RosterEditor from './RosterEditor.jsx';
 import { defaultRoster } from './data/roster.js';
 import { computeCurves } from './probability.js';
+import { BUILD_INFO, buildLabel, buildTitle } from './buildInfo.js';
 
 const FEATURED = ['Bennett', 'Fischl', 'Xiangling'];
 const noop = () => {};
@@ -52,6 +53,34 @@ describe('render smoke tests', () => {
     expect(html).toContain('Stardust &amp; Starglitter');
     expect(html).toContain('Extra wishes from Starglitter');
     expect(html).not.toContain('class="tab active">Stardust');
+  });
+
+  it('shows the deployed revision in the footer, linked to that commit', () => {
+    const html = renderToString(<App />);
+    // The commit hash is the part that proves a push actually shipped, so it
+    // has to be present and point at that exact commit -- not just at the repo.
+    expect(BUILD_INFO.shortSha).toBeTruthy();
+    expect(html).toContain(`data-commit="${BUILD_INFO.shortSha}"`);
+    expect(html).toContain(`/commit/${BUILD_INFO.sha}`);
+    expect(html).toContain(buildLabel());
+  });
+
+  it('labels the build with the version, build number and short hash', () => {
+    const label = buildLabel({
+      version: '9.9.9',
+      shortSha: 'abc1234',
+      build: '42',
+    });
+    expect(label).toBe('v9.9.9 \u00b7 build 42 \u00b7 abc1234');
+    // A build with no commit count (a tarball build, where git is absent)
+    // drops that part rather than printing "build undefined".
+    expect(buildLabel({ version: '1.0.0', shortSha: 'dev', build: '' })).toBe(
+      'v1.0.0 \u00b7 dev'
+    );
+    expect(buildTitle({ sha: 'deadbeef', branch: 'master', builtAt: '' })).toContain(
+      'deadbeef'
+    );
+    expect(buildTitle({ sha: '', dirty: true })).toContain('uncommitted');
   });
 
   it('ships the backdrop image it points at', async () => {

@@ -10,6 +10,13 @@ import Explanation from "./Explanation.jsx";
 import Stardust from "./Stardust.jsx";
 import useRoster from "./useRoster.js";
 import { economyReport } from "./starglitter.js";
+import {
+  BUILD_INFO,
+  REPO_URL,
+  buildCommitUrl,
+  buildLabel,
+  buildTitle,
+} from "./buildInfo.js";
 
 const THEME_KEY = "gpc-theme";
 
@@ -239,13 +246,29 @@ export default function App() {
           <div className="mx-auto max-w-5xl px-4 text-center text-xs">
             Pure-math model. Source on{" "}
             <a
-              href="https://github.com/Brandon-Yip2/genshin-pull-calculator"
+              href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
             >
               GitHub
             </a>
             . Not affiliated with HoYoverse.
+          </div>
+          {/* The deployed revision. The commit hash is the part that proves a
+              push actually shipped, since Vercel builds one deploy per
+              commit; the version and build number are just there to be
+              readable. Hovering gives the full hash, branch and build time. */}
+          <div className="mx-auto mt-2 max-w-5xl px-4 text-center">
+            <a
+              className="g-build tnum"
+              href={buildCommitUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={buildTitle()}
+              data-commit={BUILD_INFO.shortSha}
+            >
+              {buildLabel()}
+            </a>
           </div>
         </footer>
       </div>
