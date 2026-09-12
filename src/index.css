@@ -1005,6 +1005,31 @@ button.g-row {
   gap: 0.3rem;
 }
 
+/* Target-constellation chips.
+   The generic .g-tab carries a leading diamond bullet, which pushes the label
+   roughly 6px right of the pill's centre -- fine inside a wide tab, visibly
+   lopsided in a two-character chip like "C4". These drop the bullet, centre
+   the label on the pill instead, and use tabular numerals so all seven chips
+   come out exactly the same width. */
+.g-tab-num {
+  justify-content: center;
+  min-width: 3.05rem;
+  padding: 0.44rem 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.g-tab-num::before {
+  display: none;
+}
+
+/* Slightly stronger ring on the chosen constellation than the generic tab. */
+.g-tab-num.active {
+  border-color: color-mix(in oklab, var(--g-gold) 85%, transparent);
+}
+
 .g-tab .g-tab-count {
   border-radius: 999px;
   padding: 0 0.4rem;
@@ -1120,6 +1145,16 @@ button.g-row {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1.5;
+}
+
+/* Release-version chip, shown on a character card while the picker is sorted
+   by release date. Overrides the element colours .g-chip inherits. */
+.g-chip-version {
+  border-color: color-mix(in oklab, var(--g-gold) 55%, transparent);
+  background: color-mix(in oklab, #0a0c14 72%, transparent);
+  color: #f3e7c6;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------------------------------------------------------------------------

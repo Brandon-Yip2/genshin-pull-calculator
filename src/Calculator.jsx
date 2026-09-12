@@ -286,14 +286,16 @@ export default function Calculator({
           <span className="text-xs uppercase tracking-wider opacity-60">
             Target constellation
           </span>
-          <div role="tablist" className="g-tabs mt-2">
+          <div role="tablist" aria-label="Target constellation" className="g-tabs mt-2">
             {CONST_LABELS.map((label, i) => (
               <button
                 key={label}
                 type="button"
                 role="tab"
                 aria-selected={i === targetC}
-                className={'g-tab' + (i === targetC ? ' active' : '')}
+                aria-label={`${label} — ${targetK(i)} ${targetK(i) === 1 ? 'copy' : 'copies'} of the limited 5★`}
+                title={`${label} — ${targetK(i)} ${targetK(i) === 1 ? 'copy' : 'copies'} of the limited 5★`}
+                className={'g-tab g-tab-num' + (i === targetC ? ' active' : '')}
                 onClick={() => setTargetC(i)}
               >
                 {label}

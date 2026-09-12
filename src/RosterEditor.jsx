@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   ELEMENTS,
+  ELEMENT_ORDER,
   FOUR_STAR_CHARACTERS,
   MAX_CONSTELLATION,
   NOT_OWNED,
@@ -10,6 +11,35 @@ import {
   elementIconUrl,
 } from './data/roster.js';
 import { STARGLITTER_PER_FATE, glitterForCharacter } from './starglitter.js';
+
+// The three ways the picker can be ordered.
+const SORTS = [
+  { id: 'name', label: 'Name' },
+  { id: 'element', label: 'Element' },
+  { id: 'release', label: 'Release' },
+];
+
+const byName = (a, b) => a.name.localeCompare(b.name);
+
+/**
+ * Orders a roster group. "Element" groups by the game's own element order
+ * (Anemo -> Cryo) with names alphabetical inside each group; "Release" is
+ * chronological by the ISO debut date recorded in the roster data.
+ */
+function sortRoster(list, mode) {
+  const out = [...list];
+  if (mode === 'element') {
+    return out.sort(
+      (a, b) =>
+        ELEMENT_ORDER.indexOf(a.element) - ELEMENT_ORDER.indexOf(b.element) ||
+        byName(a, b)
+    );
+  }
+  if (mode === 'release') {
+    return out.sort((a, b) => a.released.localeCompare(b.released) || byName(a, b));
+  }
+  return out.sort(byName);
+}
 
 // The element symbol, hidden entirely if the CDN does not have it (the chip
 // still carries the element name, so nothing breaks).
@@ -58,7 +88,7 @@ function CharacterIcon({ name, element }) {
  * parchment name strip carrying the Starglitter payout, and the C0–C6 picker
  * as the diamond constellation nodes from the constellation screen.
  */
-function CharacterCard({ name, element, stars, value, onChange }) {
+function CharacterCard({ name, element, stars, value, version, showVersion, onChange }) {
   const unowned = value === NOT_OWNED;
   const glitter = glitterForCharacter(stars, value);
   const elementMeta = ELEMENTS[element];
@@ -78,6 +108,14 @@ function CharacterCard({ name, element, stars, value, onChange }) {
           <ElementIcon element={element} />
           {elementMeta?.label}
         </span>
+        {showVersion && version && (
+          <span
+            className="g-chip g-chip-version absolute right-1.5 top-1.5"
+            title={`Debuted in version ${version}`}
+          >
+            {version}
+          </span>
+        )}
         <div className="w-16">
           <CharacterIcon name={name} element={element} />
         </div>
@@ -149,6 +187,7 @@ export default function RosterEditor({
 }) {
   const [group, setGroup] = useState('fourStar');
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState('name');
 
   const active = GROUPS.find((g) => g.id === group);
   const values = roster[group];
@@ -174,9 +213,9 @@ export default function RosterEditor({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = active.list;
-    if (!q) return list;
-    return list.filter((c) => c.name.toLowerCase().includes(q));
-  }, [active, query]);
+    const matched = q ? list.filter((c) => c.name.toLowerCase().includes(q)) : list;
+    return sortRoster(matched, sort);
+  }, [active, query, sort]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -207,7 +246,26 @@ export default function RosterEditor({
         />
       </div>
 
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs opacity-70">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider opacity-60">Sort by</span>
+          <div role="tablist" aria-label="Sort characters" className="g-tabs">
+            {SORTS.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={sort === s.id}
+                className={'g-tab g-tab-sm' + (sort === s.id ? ' active' : '')}
+                onClick={() => setSort(s.id)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs opacity-70">
         <span>
           <strong className="opacity-100">{stats.owned}</strong>/{stats.total}{' '}
           owned
@@ -220,6 +278,7 @@ export default function RosterEditor({
           <strong className="opacity-100">{stats.avgGlitter.toFixed(2)}</strong>{' '}
           Starglitter per duplicate
         </span>
+        </div>
       </div>
 
       <p className="g-panel p-3 text-xs leading-relaxed opacity-80">
@@ -263,6 +322,8 @@ export default function RosterEditor({
             element={c.element}
             stars={active.stars}
             value={values[c.name]}
+            version={c.version}
+            showVersion={sort === 'release'}
             onChange={(v) => setConstellation(group, c.name, v)}
           />
         ))}

@@ -23,9 +23,74 @@ export const ELEMENTS = {
   cryo: { label: 'Cryo', color: '#9fd6e9' },
 };
 
+// The order the game itself lists elements in, and the order the "Element"
+// sort uses.
+export const ELEMENT_ORDER = ['anemo', 'geo', 'electro', 'dendro', 'hydro', 'pyro', 'cryo'];
+
+// ---------------------------------------------------------------------------
+// Release data
+// ---------------------------------------------------------------------------
+// Debut date (ISO, so it sorts as a plain string) and version label for every
+// character that can appear in these pools, taken from the Genshin Impact
+// Wiki's character change history, which records the version each character was
+// added in and on what date. 4★ and 5★ debuts are interleaved chronologically.
+const RELEASE_EVENTS = [
+  ['2020-09-28', '1.0', ['Amber', 'Barbara', 'Beidou', 'Bennett', 'Chongyun', 'Diluc', 'Fischl', 'Jean', 'Kaeya', 'Keqing', 'Lisa', 'Mona', 'Ningguang', 'Noelle', 'Qiqi', 'Razor', 'Sucrose', 'Xiangling', 'Xingqiu']],
+  ['2020-11-11', '1.1', ['Diona']],
+  ['2020-12-01', '1.1', ['Xinyan']],
+  ['2021-04-06', '1.4', ['Rosaria']],
+  ['2021-04-28', '1.5', ['Yanfei']],
+  ['2021-08-10', '2.0', ['Sayu']],
+  ['2021-09-01', '2.1', ['Kujou Sara']],
+  ['2021-11-02', '2.2', ['Thoma']],
+  ['2021-12-14', '2.3', ['Gorou']],
+  ['2022-01-05', '2.4', ['Yun Jin']],
+  ['2022-06-21', '2.7', ['Kuki Shinobu']],
+  ['2022-07-13', '2.8', ['Shikanoin Heizou']],
+  ['2022-08-24', '3.0', ['Collei', 'Tighnari']],
+  ['2022-09-09', '3.0', ['Dori']],
+  ['2022-09-28', '3.1', ['Candace']],
+  ['2022-11-18', '3.2', ['Layla']],
+  ['2022-12-07', '3.3', ['Faruzan']],
+  ['2023-01-18', '3.4', ['Yaoyao']],
+  ['2023-03-01', '3.5', ['Dehya']],
+  ['2023-03-21', '3.5', ['Mika']],
+  ['2023-05-02', '3.6', ['Kaveh']],
+  ['2023-05-24', '3.7', ['Kirara']],
+  ['2023-08-16', '4.0', ['Lynette']],
+  ['2023-09-06', '4.0', ['Freminet']],
+  ['2023-11-08', '4.2', ['Charlotte']],
+  ['2024-01-09', '4.3', ['Chevreuse']],
+  ['2024-01-31', '4.4', ['Gaming']],
+  ['2024-06-05', '4.7', ['Sethos']],
+  ['2024-08-28', '5.0', ['Kachina']],
+  ['2024-11-20', '5.2', ['Ororon']],
+  ['2025-01-21', '5.3', ['Lan Yan']],
+  ['2025-02-12', '5.4', ['Yumemizuki Mizuki']],
+  ['2025-03-26', '5.5', ['Iansan']],
+  ['2025-05-07', '5.6', ['Ifa']],
+  ['2025-06-18', '5.7', ['Dahlia']],
+  ['2025-09-10', 'Luna I', ['Aino']],
+  ['2025-12-03', 'Luna III', ['Jahoda']],
+  ['2026-02-03', 'Luna IV', ['Illuga']],
+  ['2026-05-20', 'Luna VII', ['Prune']],
+];
+
+const RELEASE_BY_NAME = new Map();
+for (const [released, version, names] of RELEASE_EVENTS) {
+  for (const name of names) RELEASE_BY_NAME.set(name, { released, version });
+}
+
+// Attaches `released` (ISO date) and `version` to a pool entry. Both are left
+// empty for a name with no recorded debut, so a gap shows up as an obviously
+// blank chip instead of silently sorting as the oldest character.
+function withRelease(character) {
+  return { ...character, ...(RELEASE_BY_NAME.get(character.name) ?? { released: '', version: '' }) };
+}
+
 // Standard 5★ characters available on Wanderlust Invocation and as the
 // "lost 50/50" result on the Character Event Wish.
-export const STANDARD_FIVE_STAR_CHARACTERS = [
+const STANDARD_FIVE_STAR_BASE = [
   { name: 'Dehya', element: 'pyro' },
   { name: 'Diluc', element: 'pyro' },
   { name: 'Jean', element: 'anemo' },
@@ -36,11 +101,13 @@ export const STANDARD_FIVE_STAR_CHARACTERS = [
   { name: 'Yumemizuki Mizuki', element: 'anemo' },
 ];
 
+export const STANDARD_FIVE_STAR_CHARACTERS = STANDARD_FIVE_STAR_BASE.map(withRelease);
+
 // Every 4★ character reachable from the Character Event Wish: the 50
 // standard-pool characters (all 4★ characters are added to the standard pool
 // one update after debut) plus the 3 featured slots, which are drawn from
 // this same set.
-export const FOUR_STAR_CHARACTERS = [
+const FOUR_STAR_BASE = [
   { name: 'Aino', element: 'hydro' },
   { name: 'Amber', element: 'pyro' },
   { name: 'Barbara', element: 'hydro' },
@@ -92,6 +159,8 @@ export const FOUR_STAR_CHARACTERS = [
   { name: 'Yaoyao', element: 'dendro' },
   { name: 'Yun Jin', element: 'geo' },
 ];
+
+export const FOUR_STAR_CHARACTERS = FOUR_STAR_BASE.map(withRelease);
 
 // The 31 standard 4★ weapons. They always award a flat 2 Starglitter each, so
 // only the count matters for the economy model.

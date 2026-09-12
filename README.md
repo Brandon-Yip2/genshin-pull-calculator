@@ -153,6 +153,12 @@ character's portrait, and exposes `—` (not owned) plus C0–C6 per character, 
 quick "all owned / all C6 / all unowned" actions. It also tracks your copy count
 of the current limited 5★ and the three featured 4★ on the banner.
 
+The picker can be ordered by **Name**, **Element** (grouped in the game's own
+Anemo → Cryo order) or **Release** (chronological by debut date, with the debut
+version shown on each card). Release data lives in `src/data/roster.js` as a
+single chronological table, and `roster.test.js` fails if a character is ever
+added without it.
+
 ## Stack
 
 - React + Vite, no backend
@@ -249,9 +255,11 @@ src/
   probability.test.js   # curve shape, 55% 50/50 anchor, monotonicity
   starglitter.js        # Stardust/Starglitter economy + Monte Carlo
   starglitter.test.js   # published-rate checks, roster effects, sim cross-check
+  verification.test.js  # triple-method verification (see below)
+  roster.test.js        # pool sizes, element order, release-date coverage
   useRoster.js          # localStorage roster + featured-4★ state
   usePersistentState.js # small localStorage hook
-  data/roster.js        # standard pools, elements, icon URLs
+  data/roster.js        # standard pools, elements, release dates, icon URLs
   data/backdrop.js      # backdrop image path (ships as public/backdrop.jpg)
   Backdrop.jsx          # the blurred landscape + scrim behind everything
   RosterEditor.jsx      # 4★ / standard 5★ constellation tracker
@@ -262,6 +270,25 @@ src/
   index.css             # Tailwind + DaisyUI themes + the .g-* Genshin chrome
   render.test.jsx       # render smoke tests
 ```
+
+## Verification
+
+`src/verification.test.js` recomputes every headline number **three ways** and
+requires them to agree:
+
+| | Method | What it is |
+| --- | --- | --- |
+| A | The shipped engine | the exact DP in `probability.js` / `starglitter.js` |
+| B | Monte Carlo | written from scratch in the test file, its own RNG, no shared code |
+| C | Independent exact derivation | different mathematics again: the 5★ process as a renewal process (wait-time convolutions and an event-indexed chain), the 4★ process as a two-state alternating renewal, the hard guarantee as a *forward* min-promo DP, the refund fixed point by bisection |
+
+The published inputs (rate curves, Starglitter table, Fate prices) are re-typed
+in the test from the wiki rather than imported, so a typo in `src/` cannot hide
+behind itself. Covered: C0–C6 probabilities at three banner states, the 50/50
+rate landing on 55%, the promo share of all 5★ events landing on 20/29,
+Stardust/Starglitter totals and every breakdown line, the C6 payout tiers for an
+owned or unowned limited 5★, the extra-wishes fixed point, and the hard-guarantee
+solver against an exhaustive forward search in seven counter/guarantee states.
 
 ## Accuracy notes
 
