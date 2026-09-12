@@ -159,13 +159,21 @@ version shown on each card). Release data lives in `src/data/roster.js` as a
 single chronological table, and `roster.test.js` fails if a character is ever
 added without it.
 
+**All 51 of the 4★ characters** are listed, current to Version 7.0 (Alyosha,
+Electro, the newest). The list is checked against the wiki's 4★ category, so
+adding a character means adding one entry to `FOUR_STAR_BASE` and one to
+`RELEASE_EVENTS`; the test asserts the count and the newest debut so a version
+bump cannot quietly go unnoticed.
+
 ## Stack
 
 - React + Vite, no backend
-- **Tailwind CSS v4 + DaisyUI 5** for the UI, with two custom themes:
-  `genshin-dark` (the menu look: slate `#313848` panels on a near-neutral
-  `#191c26` backdrop) and `genshin-light` (the bench look: `#fbf7ec` parchment
-  on `#e2d7ba`). Edit them in `src/index.css`.
+- **Tailwind CSS v4 + DaisyUI 5** for the UI, with two custom themes, both
+  complete looks rather than one look dimmed: `genshin-light` is the game's
+  **parchment** screens (`#fbf7ec` cream on `#e2d7ba`), and `genshin-dark` is its
+  **night** screens -- the Wish details and battle pass -- slate `#313848` panels
+  on a near-neutral `#191c26` backdrop, with the parchment layer turned into a
+  dim warm brown (`#4b4437`) carrying light ink. Edit them in `src/index.css`.
 - The look copies the in-game menu language rather than a generic dashboard, and
   it is built from **four layers**, because the contrast *between* them is what
   makes it read as Genshin rather than as one flat colour:
@@ -174,7 +182,7 @@ added without it.
   | --- | --- |
   | Chrome | dark slate header and footer in **both** themes, so light mode never becomes a single sheet of cream |
   | Slate panels | faintly blue (not saturated — over-saturating it turns the whole page one colour), with gold **L-brackets** at the corners |
-  | **Parchment** | cream surfaces with dark slate ink for anything holding results or choices: the headline probability, the constellation table, the reward table, every panel header bar, every disclosure header |
+  | **Parchment** | the surface for anything holding results or choices: the headline probability, the constellation rows, the reward readout, every panel header bar, every disclosure header. Cream with dark slate ink in light mode; **dim warm brown with light ink** in dark mode, so dark mode is a genuinely dark theme rather than a cream page with a slate header |
   | Quality + element | purple 4★ / gold 5★ card gradients, each leaning toward its own element hue, plus the element symbol on a chip |
 
   Other Genshin-specific touches: **cream buttons and tab fills with dark slate
@@ -184,6 +192,47 @@ added without it.
   the **diamond nodes** from the constellation screen (via `clip-path`, so a lit
   node can be outlined without the rotated box overflowing its cell). These are
   the `.g-*` classes in `src/index.css`.
+
+### Dark mode
+
+Dark mode gets the same warm parchment and gold trim, at night: the parchment
+layer drops from L\* ~97 to L\* ~35 and its ink flips from dark slate to warm
+cream, driven by tokens (`--g-parch-*`, `--g-row-*`) rather than by a pile of
+selector overrides, so one block governs the readout panels, the reward rows,
+the header bars, the collapsible summaries and the tables inside them.
+
+Measured on a full-page render (1280×5900, the whole app):
+
+| | before | after |
+| --- | --- | --- |
+| **Dark** mean L\* | 63.9 | **49.5** |
+| **Dark** pixels above L\* 70 | 28.4% | **9.0%** |
+| **Dark** cream-toned pixels | 25.5% | **7.1%** |
+| **Light** (unchanged) | 68.0 / 36.2% / 28.3% | 68.0 / 36.2% / 28.3% |
+
+Two things follow from going dark that are easy to miss, and the contrast audit
+(`npm`-less; see below) caught both:
+
+- **Reduced-opacity secondary text** needs more alpha on a dark surface than on
+a cream one. Light ink at 60% over a mid-brown row lands near 3:1, so the muted
+steps are raised inside the dark parchment layer only.
+- **Translucent dark surfaces are not reliably dark.** A bright patch of the
+landscape showing through a 0.8-alpha row lifts it into the mid-tones and the
+row's own sub-labels fall to 2.8:1, so the dark surfaces are close to opaque.
+
+Because the surfaces went dark, the "selected" row can no longer say so by being
+much lighter -- that is what breaks the sub-label contrast. It is marked with a
+gold ring and glow instead.
+
+**Verified by pixel measurement, not by eye.** Text contrast was audited by
+rendering the real app in a 1280×5900 frame and, for every text node, reading
+the ink from computed style and measuring the actual background pixels inside
+that node's box -- which resolves gradient-painted surfaces, translucency and
+the world showing through in one go. The backdrop is pinned to each of its two
+measured extremes (`#aebcb1`, `#142027`) and the worst result per label kept, so
+the answer does not depend on image-load timing. Against the same audit on the
+previous CSS: **dark failures 104 → 61, with none newly introduced and 43
+fixed**; light mode unchanged at 104.
 
 ### The world behind the UI
 
@@ -247,6 +296,25 @@ npm run build    # production bundle in dist/
 
 The repo includes `vercel.json`. Push to GitHub, import on Vercel, done.
 
+### Knowing which revision is live
+
+The footer carries the build identity (`src/buildInfo.js`), e.g.
+`v1.0.0 · build 19 · cb3a457`, linked to that exact commit and with the full
+hash, branch, build time and a dirty-tree flag on hover.
+
+The **commit hash is the source of truth**, and it is the better of the two
+options: Vercel builds exactly one deployment per commit, so the hash both
+identifies the code and proves the deploy is the one you pushed. A version
+number cannot do that -- it can go stale, and two different builds can share
+one. The number is still shown, because it is the readable one, with a commit
+count as an automatically-incrementing build number beside it. Bump `version`
+in `package.json` on notable releases; the hash needs no discipline at all.
+
+`vite.config.js` injects it at build time via `define`, preferring Vercel's
+`VERCEL_GIT_COMMIT_SHA` and falling back to reading git, so the hash shown on
+the deployed site is exactly the deployed commit. Outside a git checkout the
+badge degrades to `v… · dev` rather than breaking the build.
+
 ## Layout
 
 ```text
@@ -261,6 +329,7 @@ src/
   usePersistentState.js # small localStorage hook
   data/roster.js        # standard pools, elements, release dates, icon URLs
   data/backdrop.js      # backdrop image path (ships as public/backdrop.jpg)
+  buildInfo.js          # build identity (commit hash / version), injected by Vite
   Backdrop.jsx          # the blurred landscape + scrim behind everything
   RosterEditor.jsx      # 4★ / standard 5★ constellation tracker
   Stardust.jsx          # refund section, rendered under the calculator
