@@ -46,7 +46,7 @@ describe('roster release data', () => {
       'Beidou',
       'Bennett',
     ]);
-    expect(sorted.at(-1).name).toBe('Prune');
+    expect(sorted.at(-1).name).toBe('Alyosha');
     // The whole list must be non-decreasing in release date.
     for (let i = 1; i < sorted.length; i++) {
       expect(sorted[i - 1].released <= sorted[i].released, sorted[i].name).toBe(true);
@@ -62,7 +62,17 @@ describe('roster release data', () => {
     expect(version.Dehya).toBe('3.5');
     expect(version['Yumemizuki Mizuki']).toBe('5.4');
     expect(STANDARD_FIVE_STAR_CHARACTERS).toHaveLength(8);
-    expect(FOUR_STAR_CHARACTERS).toHaveLength(50);
+    // 51 as of Version 7.0 (Alyosha is the newest). Bump this when a new 4★
+    // debuts, together with its entry in RELEASE_EVENTS.
+    expect(FOUR_STAR_CHARACTERS).toHaveLength(51);
+  });
+
+  it('includes the newest 4★ debut with its element and version', () => {
+    const alyosha = FOUR_STAR_CHARACTERS.find((c) => c.name === 'Alyosha');
+    expect(alyosha).toBeTruthy();
+    expect(alyosha.element).toBe('electro');
+    expect(alyosha.released).toBe('2026-08-12');
+    expect(alyosha.version).toBe('7.0');
   });
 
   it('lets every element actually appear in the 4★ pool', () => {

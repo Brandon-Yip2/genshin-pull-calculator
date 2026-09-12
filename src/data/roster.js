@@ -74,6 +74,7 @@ const RELEASE_EVENTS = [
   ['2025-12-03', 'Luna III', ['Jahoda']],
   ['2026-02-03', 'Luna IV', ['Illuga']],
   ['2026-05-20', 'Luna VII', ['Prune']],
+  ['2026-08-12', '7.0', ['Alyosha']],
 ];
 
 const RELEASE_BY_NAME = new Map();
@@ -103,12 +104,14 @@ const STANDARD_FIVE_STAR_BASE = [
 
 export const STANDARD_FIVE_STAR_CHARACTERS = STANDARD_FIVE_STAR_BASE.map(withRelease);
 
-// Every 4★ character reachable from the Character Event Wish: the 50
-// standard-pool characters (all 4★ characters are added to the standard pool
-// one update after debut) plus the 3 featured slots, which are drawn from
-// this same set.
+// Every 4★ character reachable from the Character Event Wish: the standard-pool
+// characters (all 4★ characters join the standard pool one update after
+// debut, so the newest ones are featured-only for a patch) plus the 3 featured
+// slots, which are drawn from this same set. 51 characters as of Version 7.0.
+// The newest, Alyosha, debuted in 7.0 and enters Wanderlust Invocation in 7.1.
 const FOUR_STAR_BASE = [
   { name: 'Aino', element: 'hydro' },
+  { name: 'Alyosha', element: 'electro' },
   { name: 'Amber', element: 'pyro' },
   { name: 'Barbara', element: 'hydro' },
   { name: 'Beidou', element: 'electro' },
