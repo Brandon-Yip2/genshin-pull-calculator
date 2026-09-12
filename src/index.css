@@ -119,10 +119,49 @@
   --g-ink: #3d4459;
   --g-ink-dim: #5c6680;
 
-  /* The parchment surface itself (results panels, the reward readout). */
+  /* The parchment surface itself (results panels, the reward readout).
+
+     `--g-parchment-*` are the opaque colours, used for gradients and as
+     color-mix() stops. `--g-parch-fill-*` and `--g-row-fill-*` carry the
+     surface alpha and are what the big translucent panels actually paint with.
+     `--g-parch-ink*` is the type ON those surfaces: dark here, and flipped to
+     light in dark mode, where the parchment becomes a dim warm brown rather
+     than a glowing cream. That inversion is what makes dark mode actually
+     dark instead of a near-copy of light mode. */
   --g-parchment-hi: #fdf8ea;
   --g-parchment-lo: #eadfc2;
   --g-parchment-line: #bda166;
+  --g-parch-fill-hi: rgb(253 248 234 / 0.95);
+  --g-parch-fill-lo: rgb(234 223 194 / 0.91);
+  --g-row-fill-hi: rgb(253 250 240 / 0.93);
+  --g-row-fill-lo: rgb(231 222 198 / 0.88);
+  --g-row-line: rgb(255 255 255 / 0.38);
+  --g-row-gloss: rgb(255 255 255 / 0.8);
+  --g-row-gloss-strong: #ffffff;
+  --g-row-hover-hi: rgb(255 253 246 / 0.96);
+  --g-row-hover-lo: rgb(240 233 214 / 0.9);
+  --g-row-sel-hi: #fffdf7;
+  --g-row-sel-lo: #f3ecda;
+  --g-parch-ink: #3a4157;
+  --g-parch-strong: #6b4710;
+  --g-parch-label: #7d5f1e;
+  --g-parch-success: #2f7a5e;
+  --g-parch-error: #a9433d;
+  --g-parch-rule: color-mix(in oklab, #8a6a28 24%, #ded3b4);
+  --g-parch-rule-strong: color-mix(in oklab, #8a6a28 40%, #ded3b4);
+  --g-parch-gold-line: #c3a86a;
+  --g-parch-tint: rgb(255 252 240 / 0.75);
+  --g-parch-tint-strong: rgb(138 106 40 / 0.13);
+  --g-parch-chip-count: rgb(58 65 87 / 0.16);
+  --g-parch-ornament: #b99a54;
+  --g-parch-gloss: rgb(255 253 246 / 0.9);
+  --g-parch-input-bg: color-mix(in oklab, white 82%, var(--g-parchment-hi));
+  --g-parch-stripe: rgb(138 106 40 / 0.07);
+  --g-parch-stripe-hover: rgb(138 106 40 / 0.15);
+  --g-parch-stat-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+  --g-parch-shadow: 0 10px 26px rgb(0 0 0 / 0.3);
+  --g-parch-shadow-selected: 0 0 20px rgb(255 231 170 / 0.4),
+    0 3px 14px rgb(8 14 26 / 0.34);
 
   /* Slate chrome: header bar, panel wells, tab tracks. Fixed in both themes so
      the light theme keeps a dark frame around its parchment. */
@@ -373,6 +412,32 @@ main,
   text-underline-offset: 2px;
 }
 
+/* The revision badge. Deliberately quieter than the footer's other link -- it
+   is reference information rather than a call to action -- but still legible:
+   it sits on the dark chrome in BOTH themes, so it needs light ink of its own.
+   Two classes, so it also out-specifies the `.g-footer a` rule above without
+   needing !important. */
+.g-footer .g-build {
+  display: inline-block;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(0 0 0 / 0.24);
+  color: #ded5bd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.g-footer .g-build:hover {
+  color: #ffe6a8;
+  border-color: color-mix(in oklab, var(--g-gold) 60%, transparent);
+  background: rgb(0 0 0 / 0.34);
+  text-decoration: none;
+}
+
 /* ---------------------------------------------------------------------------
    Chrome header -- slate in BOTH themes, so light mode is never all parchment.
    --------------------------------------------------------------------------- */
@@ -474,14 +539,14 @@ main,
     var(--g-parchment-hi),
     var(--g-parchment-lo)
   );
-  color: #3a4157;
+  color: var(--g-parch-ink);
   border-bottom: 1px solid var(--g-parchment-line);
   border-radius: calc(var(--radius-box) - 1px) calc(var(--radius-box) - 1px) 0 0;
   padding: 0.6rem 0.9rem;
 }
 
 .g-head-bar .g-title {
-  color: #3a4157;
+  color: var(--g-parch-ink);
 }
 
 .g-head-bar .g-diamond {
@@ -490,8 +555,8 @@ main,
 }
 
 .g-head-bar .g-tab-count {
-  background: rgb(58 65 87 / 0.16);
-  color: #3a4157;
+  background: var(--g-parch-chip-count);
+  color: var(--g-parch-ink);
 }
 
 /* Collapsible panels (the Capturing Radiance / pity disclosures) get the same
@@ -503,14 +568,14 @@ main,
     var(--g-parchment-hi),
     var(--g-parchment-lo)
   );
-  color: #3a4157;
+  color: var(--g-parch-ink);
   border-bottom: 1px solid var(--g-parchment-line);
   border-radius: calc(var(--radius-box) - 1px) calc(var(--radius-box) - 1px) 0 0;
 }
 
 .g-panel > summary.collapse-title .g-title,
 .g-panel > summary.collapse-title strong {
-  color: #3a4157;
+  color: var(--g-parch-ink);
 }
 
 /* In light mode the well is a tanned recess rather than a dark one, so the
@@ -538,22 +603,22 @@ main,
    --------------------------------------------------------------------------- */
 
 .g-panel-parchment {
-  --g-gold: #b99a54;
+  --g-gold: var(--g-parch-ornament);
   position: relative;
   border-radius: var(--radius-box);
   border: 1px solid var(--g-parchment-line);
-  color: var(--g-ink);
+  color: var(--g-parch-ink);
   background: linear-gradient(
     180deg,
-    rgb(253 248 234 / 0.95),
-    rgb(234 223 194 / 0.91)
+    var(--g-parch-fill-hi),
+    var(--g-parch-fill-lo)
   );
   backdrop-filter: blur(10px) saturate(1.05);
   -webkit-backdrop-filter: blur(10px) saturate(1.05);
   box-shadow:
-    inset 0 1px 0 rgb(255 253 246 / 0.9),
+    inset 0 1px 0 var(--g-parch-gloss),
     inset 0 -14px 26px -22px rgb(93 70 26 / 0.55),
-    0 10px 26px rgb(0 0 0 / 0.3);
+    var(--g-parch-shadow);
 }
 
 .g-panel-parchment::before {
@@ -578,15 +643,16 @@ main,
    ornaments next to the text. */
 .g-panel-parchment .text-primary,
 .g-panel-parchment .g-title {
-  color: #3a4157;
+  color: var(--g-parch-ink);
 }
 
-/* The big number on parchment is a deep bronze rather than bright gold: the
-   game keeps its cream rows at dark-ink contrast, and bright gold on cream
-   only reaches about 2.4:1. */
+/* The big number on parchment is a deep bronze rather than bright gold: on a
+   cream surface bright gold only reaches about 2.4:1. Dark mode flips both the
+   surface and this ink, so the number goes back to bright gold there -- see
+   the dark-mode block near the end of this file. */
 .g-panel-parchment .g-stat {
-  color: #6b4710;
-  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+  color: var(--g-parch-strong);
+  text-shadow: var(--g-parch-stat-shadow);
 }
 
 .g-panel-parchment .g-diamond {
@@ -595,68 +661,73 @@ main,
 }
 
 .g-panel-parchment .g-rule {
-  background: linear-gradient(90deg, transparent, #c3a86a, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--g-parch-gold-line),
+    transparent
+  );
 }
 
 .g-panel-parchment .text-success {
-  color: #2f7a5e;
+  color: var(--g-parch-success);
 }
 
 .g-panel-parchment .text-error {
-  color: #a9433d;
+  color: var(--g-parch-error);
 }
 
 .g-panel-parchment .input,
 .g-panel-parchment .select,
 .g-panel-parchment .checkbox {
   border-color: var(--g-parchment-line);
-  color: var(--g-ink);
+  color: var(--g-parch-ink);
 }
 
 .g-panel-parchment .input,
 .g-panel-parchment .select {
-  background: color-mix(in oklab, white 82%, var(--g-parchment-hi));
+  background: var(--g-parch-input-bg);
 }
 
 .g-panel-parchment .border-primary\/10,
 .g-panel-parchment .bg-primary\/10 {
-  background: rgb(255 252 240 / 0.75);
+  background: var(--g-parch-tint);
 }
 
 /* The highlighted (selected) row of a table on parchment. */
 .g-panel-parchment .bg-primary\/15 {
-  background: rgb(138 106 40 / 0.13);
+  background: var(--g-parch-tint-strong);
 }
 
-/* Tables and rules inside a parchment panel, re-inked for dark-on-cream. */
+/* Tables and rules inside a parchment panel, inked for that surface. */
 .g-panel-parchment .g-table th {
-  color: #7d5f1e;
+  color: var(--g-parch-label);
 }
 
 .g-panel-parchment .g-table td {
-  color: var(--g-ink);
-  border-color: color-mix(in oklab, #8a6a28 24%, #ded3b4);
+  color: var(--g-parch-ink);
+  border-color: var(--g-parch-rule);
 }
 
 .g-panel-parchment .g-table tbody tr:nth-child(even) {
-  background: rgb(138 106 40 / 0.07);
+  background: var(--g-parch-stripe);
 }
 
 .g-panel-parchment .g-table tbody tr:hover {
-  background: rgb(138 106 40 / 0.15);
+  background: var(--g-parch-stripe-hover);
 }
 
 .g-panel-parchment .g-table tfoot tr {
-  border-color: color-mix(in oklab, #8a6a28 40%, #ded3b4);
+  border-color: var(--g-parch-rule-strong);
 }
 
 .g-panel-parchment .border-base-300 {
-  border-color: color-mix(in oklab, #8a6a28 32%, #ded3b4);
+  border-color: var(--g-parch-rule);
 }
 
 .g-panel-parchment .card-strip,
 .g-panel-parchment .g-panel {
-  color: var(--g-ink);
+  color: var(--g-parch-ink);
 }
 
 /* Highlighted slate panel (the "selected" state in a Genshin list). */
@@ -713,18 +784,18 @@ main,
   width: 100%;
   padding: 0.5rem 1rem;
   border-radius: var(--radius-box);
-  border: 1px solid rgb(255 255 255 / 0.38);
-  color: #3a4157;
+  border: 1px solid var(--g-row-line);
+  color: var(--g-parch-ink);
   text-align: left;
   background: linear-gradient(
     180deg,
-    rgb(253 250 240 / 0.93),
-    rgb(231 222 198 / 0.88)
+    var(--g-row-fill-hi),
+    var(--g-row-fill-lo)
   );
   backdrop-filter: blur(8px) saturate(1.05);
   -webkit-backdrop-filter: blur(8px) saturate(1.05);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 1px 0 var(--g-row-gloss),
     0 2px 10px rgb(8 14 26 / 0.28);
   transition: background 0.12s ease, box-shadow 0.12s ease;
 }
@@ -734,22 +805,17 @@ button.g-row {
 }
 
 .g-row:hover {
-  background: linear-gradient(
-    180deg,
-    rgb(255 253 246 / 0.96),
-    rgb(240 233 214 / 0.9)
-  );
+  background: linear-gradient(180deg, var(--g-row-hover-hi), var(--g-row-hover-lo));
 }
 
 /* Selected row: brighter, with the soft glow the game puts behind the row you
    are on. */
 .g-row--selected,
 .g-row--selected:hover {
-  background: linear-gradient(180deg, #fffdf7 0%, #f3ecda 100%);
+  background: linear-gradient(180deg, var(--g-row-sel-hi) 0%, var(--g-row-sel-lo) 100%);
   box-shadow:
-    inset 0 1px 0 #fff,
-    0 0 20px rgb(255 231 170 / 0.4),
-    0 3px 14px rgb(8 14 26 / 0.34);
+    inset 0 1px 0 var(--g-row-gloss-strong),
+    var(--g-parch-shadow-selected);
 }
 
 .g-row-label {
@@ -1636,6 +1702,123 @@ button.g-row {
   .cr-bar-loss {
     @apply bg-error text-error-content;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Dark mode
+
+   The light theme is the game's parchment screens: cream surfaces, dark slate
+   ink. Dark mode is the game's OTHER face -- the Wish details and battle-pass
+   screens -- which keep the same warm parchment and gold trim but at night. So
+   the surface keeps its warm tan hue and drops from L* ~97 to L* ~35, and the
+   ink flips from dark slate to warm cream.
+
+   Every value here is a token rather than a pile of selector overrides, so one
+   block governs the whole parchment layer: the readout panels, the reward rows,
+   the cream header bars, the collapsible summaries and the tables inside them.
+   This is what the theme was missing -- measured, dark mode was only 5 L* below
+   light mode (67.8 vs 73.0) and a third of its pixels were bright cream, i.e.
+   a near-copy of light mode with a slate header.
+   --------------------------------------------------------------------------- */
+
+[data-theme='genshin-dark'] {
+  /* A dim warm brown instead of a glowing cream. Still translucent, so the
+     blurred world tints it. */
+  --g-parchment-hi: #4b4437;
+  --g-parchment-lo: #3a3529;
+  --g-parchment-line: #6d5c37;
+  /* Fairly opaque on purpose. A bright patch of the world showing through a
+     mid-brown surface lifts it into the mid-tones, where light ink at reduced
+     opacity stops reaching 4.5:1 -- measured on the audit's bright backdrop
+     pin, a 0.8-alpha row over the brightest pixel of the landscape left the
+     row sub-labels at 2.8:1. Keeping the dark surfaces nearly solid keeps them
+     genuinely dark whichever way the landscape runs. */
+  --g-parch-fill-hi: rgb(75 68 55 / 0.96);
+  --g-parch-fill-lo: rgb(56 51 40 / 0.94);
+  /* Rows sit a step LIGHTER than the panel they rest on, the way a raised list
+     item does in the game -- so the layering survives the surface going dark. */
+  --g-row-fill-hi: rgb(88 80 64 / 0.92);
+  --g-row-fill-lo: rgb(70 63 50 / 0.9);
+  --g-row-line: rgb(255 236 190 / 0.16);
+  --g-row-gloss: rgb(255 240 200 / 0.07);
+  --g-row-gloss-strong: rgb(255 236 190 / 0.14);
+  --g-row-hover-hi: rgb(104 95 76 / 0.94);
+  --g-row-hover-lo: rgb(84 76 59 / 0.92);
+  /* Barely lighter than a plain row. A cream-style "selected" row that jumps in
+     lightness cannot work once the ink is light: measured on the bright
+     backdrop pin, the old value left the selected row's sub-labels at 3.6:1.
+     Selection is carried by the gold ring and glow below instead. */
+  --g-row-sel-hi: rgb(94 85 63 / 0.95);
+  --g-row-sel-lo: rgb(80 72 53 / 0.93);
+
+  /* Ink, flipped to warm cream. */
+  --g-parch-ink: #efe6d2;
+  --g-parch-strong: #ffd98a;
+  --g-parch-label: #e7d09c;
+  --g-parch-success: #a9e3c6;
+  --g-parch-error: #f0a49c;
+  --g-parch-rule: rgb(255 232 180 / 0.16);
+  --g-parch-rule-strong: rgb(255 232 180 / 0.26);
+  --g-parch-gold-line: #8a7440;
+  --g-parch-tint: rgb(255 240 205 / 0.1);
+  --g-parch-tint-strong: rgb(255 213 128 / 0.18);
+  --g-parch-chip-count: rgb(255 240 205 / 0.15);
+  --g-parch-ornament: #c8a865;
+  /* A white hairline at 0.9 alpha is a bright line on a dark surface; the
+     gloss drops to a faint warm highlight. */
+  --g-parch-gloss: rgb(255 240 205 / 0.09);
+  /* Inputs invert with the surface: a dark well with the now-light ink, rather
+     than the near-white field that would leave light text on light. */
+  --g-parch-input-bg: rgb(0 0 0 / 0.3);
+  --g-parch-stripe: rgb(255 232 180 / 0.05);
+  --g-parch-stripe-hover: rgb(255 232 180 / 0.1);
+  --g-parch-stat-shadow: 0 0 18px rgb(255 213 128 / 0.3);
+  --g-parch-shadow: 0 10px 26px rgb(0 0 0 / 0.42);
+  --g-parch-shadow-selected: 0 0 18px rgb(255 213 128 / 0.15),
+    0 3px 14px rgb(0 0 0 / 0.44);
+}
+
+/* Muted secondary text needs more opacity on a dark surface than on a cream
+   one. Light ink at 60% over a mid-brown row sits near 3:1, which is where the
+   contrast audit caught the refund captions, the row sub-labels and the stats
+   captions after the parchment layer went dark. Raising the reduced-opacity
+   steps is the usual dark-theme accommodation (Material's dark palette uses
+   87% where its light palette uses 60%) and is scoped to the surfaces that
+   actually flipped, so nothing on the slate panels or in light mode moves. */
+[data-theme='genshin-dark'] .g-panel-parchment
+  :where(.opacity-60, .opacity-70, .opacity-75, .opacity-80, .opacity-85, .g-row-sub, .info-icon),
+[data-theme='genshin-dark'] .g-row
+  :where(.opacity-60, .opacity-70, .opacity-75, .opacity-80, .opacity-85, .g-row-sub, .info-icon),
+[data-theme='genshin-dark'] .g-head-bar
+  :where(.opacity-60, .opacity-70, .opacity-75, .opacity-80, .opacity-85, .info-icon),
+[data-theme='genshin-dark'] .collapse-title
+  :where(.opacity-60, .opacity-70, .opacity-75, .opacity-80, .opacity-85, .info-icon) {
+  opacity: 0.88;
+}
+
+/* Row sub-labels are the smallest muted text and sit on the lightest of the
+   dark surfaces, so on a selected row they land just under 4.5:1 at the shared
+   step above. They get their own. */
+[data-theme='genshin-dark'] .g-row .g-row-sub {
+  opacity: 0.95;
+}
+
+/* With the selected row no longer much lighter than the rest, the gold ring and
+   glow are what say "this is the row you are on". */
+[data-theme='genshin-dark'] .g-row--selected,
+[data-theme='genshin-dark'] .g-row--selected:hover {
+  border-color: color-mix(in oklab, var(--g-gold) 72%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--g-row-gloss-strong),
+    0 0 20px rgb(255 213 128 / 0.22),
+    0 3px 14px rgb(0 0 0 / 0.44);
+}
+
+/* The equation chip stays cream in dark mode (it is a small pill, not a
+   surface), and its bronze "+"/"=" ink was tuned for cream-on-cream. Against
+   the darker chip the dark surface produces it needs the deeper bronze. */
+[data-theme='genshin-dark'] .g-equation strong {
+  color: #6b4710;
 }
 
 /* ---------------------------------------------------------------------------
